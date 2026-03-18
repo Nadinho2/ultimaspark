@@ -1,0 +1,91 @@
+[
+  {
+    "slug": "ai-automation",
+    "title": "AI Automation",
+    "description": "6-week intensive to build intelligent agents and automated workflows.",
+    "weeks": 6,
+    "weeksDetail": [
+      {
+        "title": "Foundations of AI Automation",
+        "summary": "Core concepts, agents, and prompting.",
+        "topics": [
+          {
+            "id": "ai-automation-week-1-topic-1",
+            "title": "Introduction to AI Agents",
+            "bullets": [
+              "What agents are and why they matter",
+              "Key components: memory, tools, policies"
+            ]
+          }
+        ]
+      }
+    ],
+    "videos": []
+  },
+  {
+    "slug": "vibe-coding",
+    "title": "Vibe Coding",
+    "description": "Creative coding journey into generative visuals and vibe-driven design.",
+    "weeks": 6,
+    "weeksDetail": [
+      {
+        "title": "Vibe Fundamentals",
+        "summary": "Language of aesthetics, motion, and rhythm.",
+        "topics": [
+          {
+            "id": "vibe-coding-week-1-topic-1",
+            "title": "Aesthetic Coding Principles",
+            "bullets": [
+              "What makes interfaces feel alive",
+              "Balancing minimalism with expressiveness"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "n8n",
+    "title": "N8N Automation",
+    "description": "Learn N8N Automation from a Pro",
+    "weeks": 6,
+    "weeksDetail": [
+      {
+        "title": "Getting Started with n8n",
+        "summary": "Understand the n8n canvas and core concepts.",
+        "topics": [
+          {
+            "id": "n8n-week-1-topic-1",
+            "title": "n8n Basics",
+            "bullets": [
+              "What n8n is and when to use it",
+              "Nodes, workflows, and triggers"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Week 2",
+        "summary": "something",
+        "topics": [
+          {
+            "id": "n8n-week-2-topic-1",
+            "title": "hhhhh"
+          }
+        ]
+      }
+    ],
+    "videos": [
+      {
+        "week": 1,
+        "title": "ai-automation",
+        "youtubeId": "1y6smkh6c-0"
+      },
+      {
+        "week": 2,
+        "title": "ai-automation week 2",
+        "youtubeId": "1y6smkh6c-0"
+      }
+    ]
+  }
+]
