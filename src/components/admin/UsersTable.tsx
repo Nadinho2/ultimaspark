@@ -4,14 +4,28 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { adminListUsers, removeCourseFromUser } from "@/app/actions/admin";
 
 type AdminUserRow = Awaited<ReturnType<typeof adminListUsers>>[number];
+
+function resolveCourseSlugToRemove(
+  row: AdminUserRow,
+  selection: Record<string, string>,
+): string {
+  const pref = selection[row.id];
+  if (pref && row.enrolledCourses.includes(pref)) return pref;
+  return row.enrolledCourses[0] ?? "";
+}
 
 export function UsersTable() {
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [filtered, setFiltered] = useState<AdminUserRow[]>([]);
   const [query, setQuery] = useState("");
+  /** Per user: which enrolled course slug is selected for removal */
+  const [courseToRemoveByUser, setCourseToRemoveByUser] = useState<
+    Record<string, string>
+  >({});
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -53,17 +67,37 @@ export function UsersTable() {
       const result = await removeCourseFromUser(userId, courseSlug);
       if (result.success) {
         setRows((prev) =>
-          prev.map((r) =>
-            r.id === userId
-              ? {
-                  ...r,
-                  enrolledCourses: r.enrolledCourses.filter(
-                    (c) => c !== courseSlug,
-                  ),
-                }
-              : r,
-          ),
+          prev.map((r) => {
+            if (r.id !== userId) return r;
+            const nextEnrolled = r.enrolledCourses.filter(
+              (c) => c !== courseSlug,
+            );
+            const nextTypes = { ...r.enrollmentTypes };
+            delete nextTypes[courseSlug];
+            const nextCohorts = { ...r.cohortAssignments };
+            delete nextCohorts[courseSlug];
+            const nextProgress = { ...r.progressSummary };
+            delete nextProgress[courseSlug];
+            return {
+              ...r,
+              enrolledCourses: nextEnrolled,
+              enrollmentTypes: nextTypes,
+              cohortAssignments: nextCohorts,
+              progressSummary: nextProgress,
+            };
+          }),
         );
+        setCourseToRemoveByUser((prev) => {
+          const next = { ...prev };
+          const row = rows.find((x) => x.id === userId);
+          const still = row?.enrolledCourses.filter((c) => c !== courseSlug) ?? [];
+          if (still.length > 0) {
+            next[userId] = still[0]!;
+          } else {
+            delete next[userId];
+          }
+          return next;
+        });
         router.refresh();
       }
     });
@@ -159,33 +193,63 @@ export function UsersTable() {
                         .join(" • ")}
                 </td>
                 <td className="px-3 py-2">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex flex-col items-end justify-end gap-2 sm:flex-row sm:items-center">
                     <Button
                       size="sm"
                       variant="outline"
                       className="border-secondary/60 text-secondary hover:bg-secondary/10"
                       onClick={() =>
-                        // stub details route
                         router.push(`/admin/users/${row.id}`)
                       }
                     >
                       Details
                     </Button>
                     {row.enrolledCourses.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-destructive/60 text-destructive hover:bg-destructive/10"
-                        disabled={isPending}
-                        onClick={() =>
-                          handleRemoveCourse(
-                            row.id,
-                            row.enrolledCourses[0] ?? "",
-                          )
-                        }
-                      >
-                        Remove 1 course
-                      </Button>
+                      <>
+                        <label
+                          htmlFor={`remove-course-${row.id}`}
+                          className="sr-only"
+                        >
+                          Select course to remove for {row.name ?? "user"}
+                        </label>
+                        <Select
+                          id={`remove-course-${row.id}`}
+                          value={resolveCourseSlugToRemove(
+                            row,
+                            courseToRemoveByUser,
+                          )}
+                          onChange={(e) =>
+                            setCourseToRemoveByUser((prev) => ({
+                              ...prev,
+                              [row.id]: e.target.value,
+                            }))
+                          }
+                          className="h-8 max-w-[200px] text-[11px]"
+                        >
+                          {row.enrolledCourses.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </Select>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-destructive/60 text-destructive hover:bg-destructive/10"
+                          disabled={isPending}
+                          onClick={() =>
+                            handleRemoveCourse(
+                              row.id,
+                              resolveCourseSlugToRemove(
+                                row,
+                                courseToRemoveByUser,
+                              ),
+                            )
+                          }
+                        >
+                          Remove course
+                        </Button>
+                      </>
                     )}
                   </div>
                 </td>

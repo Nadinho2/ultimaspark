@@ -186,11 +186,60 @@ export async function removeCourseFromUser(
     const updatedProgress = { ...progress };
     delete (updatedProgress as any)[courseSlug];
 
+    const enrollmentTypes = {
+      ...((user.publicMetadata.enrollmentTypes as
+        | Record<string, "subscription" | "cohort">
+        | undefined) ?? {}),
+    };
+    delete enrollmentTypes[courseSlug];
+
+    const cohortAssignments = {
+      ...((user.publicMetadata.cohortAssignments as
+        | Record<string, string>
+        | undefined) ?? {}),
+    };
+    delete cohortAssignments[courseSlug];
+
+    const enrollmentDates = {
+      ...((user.publicMetadata.enrollmentDates as
+        | Record<string, string>
+        | undefined) ?? {}),
+    };
+    delete enrollmentDates[courseSlug];
+
+    const liveSessionVideos = {
+      ...((user.publicMetadata.liveSessionVideos as
+        | Record<string, unknown>
+        | undefined) ?? {}),
+    };
+    delete liveSessionVideos[courseSlug];
+
+    const claimedCertificates =
+      (user.publicMetadata.claimedCertificates as string[] | undefined) ??
+      [];
+    const updatedCertificates = claimedCertificates.filter(
+      (s) => s !== courseSlug,
+    );
+
+    const pendingEnrollments =
+      (user.publicMetadata.pendingEnrollments as
+        | { courseSlug: string; requestedAt: string }[]
+        | undefined) ?? [];
+    const updatedPending = pendingEnrollments.filter(
+      (p) => p.courseSlug !== courseSlug,
+    );
+
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         ...user.publicMetadata,
         enrolledCourses: updatedEnrolled,
         progress: updatedProgress,
+        enrollmentTypes,
+        cohortAssignments,
+        enrollmentDates,
+        liveSessionVideos,
+        claimedCertificates: updatedCertificates,
+        pendingEnrollments: updatedPending,
       },
     });
 
