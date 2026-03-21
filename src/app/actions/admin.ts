@@ -79,6 +79,18 @@ async function writeCourses(courses: Course[]) {
   await fs.writeFile(file, JSON.stringify(courses, null, 2), "utf8");
 }
 
+/** User-facing message when JSON file writes fail (common on serverless / read-only FS). */
+function fsErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) {
+    const m = err.message;
+    if (/read-only|EROFS|EPERM|EACCES|ENOTSUP/i.test(m)) {
+      return "Cannot save courses on this host (serverless deploys are often read-only). Run admin locally or move course data to a database.";
+    }
+    return m;
+  }
+  return fallback;
+}
+
 export async function adminListUsers() {
   const { client } = await requireAdmin();
   const list = await client.users.getUserList({});
@@ -307,7 +319,7 @@ export async function createCourse(formData: FormData): Promise<AdminResult> {
     return { success: true, message: "Course created" };
   } catch (err) {
     console.error("createCourse error", err);
-    return { success: false, error: "Failed to create course" };
+    return { success: false, error: fsErrorMessage(err, "Failed to create course") };
   }
 }
 
@@ -352,7 +364,7 @@ export async function updateCourse(formData: FormData): Promise<AdminResult> {
     return { success: true, message: "Course updated" };
   } catch (err) {
     console.error("updateCourse error", err);
-    return { success: false, error: "Failed to update course" };
+    return { success: false, error: fsErrorMessage(err, "Failed to update course") };
   }
 }
 
@@ -395,7 +407,7 @@ export async function deleteCourse(slug: string): Promise<AdminResult> {
     return { success: true, message: "Course deleted" };
   } catch (err) {
     console.error("deleteCourse error", err);
-    return { success: false, error: "Failed to delete course" };
+    return { success: false, error: fsErrorMessage(err, "Failed to delete course") };
   }
 }
 
@@ -614,7 +626,7 @@ export async function updateCourseCurriculum(
     return { success: true, message: "Curriculum updated" };
   } catch (err) {
     console.error("updateCourseCurriculum error", err);
-    return { success: false, error: "Failed to update curriculum" };
+    return { success: false, error: fsErrorMessage(err, "Failed to update curriculum") };
   }
 }
 

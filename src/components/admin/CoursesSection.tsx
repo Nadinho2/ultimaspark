@@ -24,7 +24,13 @@ export function CoursesSection() {
   const [courses, setCourses] = useState<AdminCourseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
-  const [formOpenSlug, setFormOpenSlug] = useState<string | null>(null);
+  /** Row index being edited (stable when slug field changes in the form) */
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  /** Course slug when Edit was opened — sent as originalSlug to the server */
+  const [editingOriginalSlug, setEditingOriginalSlug] = useState<string | null>(
+    null,
+  );
+  const [actionError, setActionError] = useState<string | null>(null);
   const [videoFormSlug, setVideoFormSlug] = useState<string | null>(null);
   const [curriculumSlug, setCurriculumSlug] = useState<string | null>(null);
   const [liveVideoSlug, setLiveVideoSlug] = useState<string | null>(null);
@@ -65,6 +71,7 @@ export function CoursesSection() {
   }, []);
 
   const handleCreate = () => {
+    setActionError(null);
     startTransition(async () => {
       const fd = new FormData();
       fd.append("title", newCourse.title);
@@ -82,24 +89,33 @@ export function CoursesSection() {
           weeks: 6,
         });
         router.refresh();
+      } else {
+        setActionError(result.error ?? "Could not create course.");
       }
     });
   };
 
-  const handleUpdate = (c: AdminCourseRow) => {
+  const handleUpdate = () => {
+    if (editingIndex === null || editingOriginalSlug === null) return;
+    const row = courses[editingIndex];
+    if (!row) return;
+    setActionError(null);
     startTransition(async () => {
       const fd = new FormData();
-      fd.append("originalSlug", c.slug);
-      fd.append("title", c.title);
-      fd.append("slug", c.slug);
-      fd.append("description", c.description);
-      fd.append("weeks", String(c.weeks));
+      fd.append("originalSlug", editingOriginalSlug);
+      fd.append("title", row.title);
+      fd.append("slug", row.slug);
+      fd.append("description", row.description);
+      fd.append("weeks", String(row.weeks));
       const result = await updateCourse(fd);
       if (result.success) {
         const refreshed = await adminListCourses();
         setCourses(refreshed);
-        setFormOpenSlug(null);
+        setEditingIndex(null);
+        setEditingOriginalSlug(null);
         router.refresh();
+      } else {
+        setActionError(result.error ?? "Could not save course.");
       }
     });
   };
@@ -111,11 +127,18 @@ export function CoursesSection() {
     );
     if (!confirmDelete) return;
 
+    setActionError(null);
     startTransition(async () => {
       const result = await deleteCourse(slug);
       if (result.success) {
         setCourses((prev) => prev.filter((c) => c.slug !== slug));
+        if (editingOriginalSlug === slug) {
+          setEditingIndex(null);
+          setEditingOriginalSlug(null);
+        }
         router.refresh();
+      } else {
+        setActionError(result.error ?? "Could not delete course.");
       }
     });
   };
@@ -130,6 +153,14 @@ export function CoursesSection() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
+      {actionError && (
+        <div
+          className="rounded-lg border border-spark/40 bg-spark/10 px-3 py-2 text-sm text-spark"
+          role="alert"
+        >
+          {actionError}
+        </div>
+      )}
       <div className="space-y-2 rounded-lg border border-primary/20 bg-surface/60 p-3">
         <p className="text-sm font-medium text-text-primary">
           Create new course
@@ -178,6 +209,7 @@ export function CoursesSection() {
             className="max-w-[120px] bg-surface text-sm text-text-primary"
           />
           <Button
+            type="button"
             size="sm"
             className="bg-spark text-bg hover:bg-spark/90"
             disabled={isPending || !newCourse.title}
@@ -192,7 +224,7 @@ export function CoursesSection() {
         {courses.length === 0 ? (
           <p className="text-sm text-text-secondary">No courses configured.</p>
         ) : (
-          courses.map((c) => (
+          courses.map((c, index) => (
             <div
               key={c.slug}
               className="flex min-w-0 flex-col gap-2 rounded-lg border border-primary/15 bg-surface/60 p-3"
@@ -207,7 +239,7 @@ export function CoursesSection() {
                     {c.weeks} • enrolled: {c.enrolledCount}
                   </p>
                 </div>
-                {formOpenSlug === c.slug && (
+                {editingIndex === index && (
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <Input
                       value={c.title}
@@ -503,11 +535,13 @@ export function CoursesSection() {
                       })()}
                       <div className="flex justify-end pt-1">
                         <Button
+                          type="button"
                           size="xs"
                           className="bg-spark text-bg hover:bg-spark/90"
                           disabled={isPending}
                           onClick={() =>
                             startTransition(async () => {
+                              setActionError(null);
                               const weeksDetail =
                                 ((c as any).weeksDetail as any[]) ?? [];
                               const fd = new FormData();
@@ -521,6 +555,10 @@ export function CoursesSection() {
                                 const refreshed = await adminListCourses();
                                 setCourses(refreshed);
                                 setCurriculumSlug(null);
+                              } else {
+                                setActionError(
+                                  result.error ?? "Could not save curriculum.",
+                                );
                               }
                             })
                           }
@@ -534,26 +572,35 @@ export function CoursesSection() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   className="border-secondary/60 text-secondary hover:bg-secondary/10"
-                  onClick={() =>
-                    setFormOpenSlug((prev) => (prev === c.slug ? null : c.slug))
-                  }
+                  onClick={() => {
+                    if (editingIndex === index) {
+                      setEditingIndex(null);
+                      setEditingOriginalSlug(null);
+                    } else {
+                      setEditingIndex(index);
+                      setEditingOriginalSlug(c.slug);
+                    }
+                  }}
                 >
-                  {formOpenSlug === c.slug ? "Cancel" : "Edit"}
+                  {editingIndex === index ? "Cancel" : "Edit"}
                 </Button>
-                {formOpenSlug === c.slug ? (
+                {editingIndex === index ? (
                   <Button
+                    type="button"
                     size="sm"
                     className="bg-spark text-bg hover:bg-spark/90"
                     disabled={isPending}
-                    onClick={() => handleUpdate(c)}
+                    onClick={handleUpdate}
                   >
                     Save
                   </Button>
                 ) : (
                   <Button
+                    type="button"
                     size="sm"
                     variant="destructive"
                     disabled={isPending}

@@ -34,6 +34,7 @@ export async function markComplete(formData: FormData): Promise<ProgressResult> 
           completedWeeks?: number[];
           completedTopics?: string[];
           quizzes?: Record<string, { passed: boolean; score?: number }>;
+          topicNotes?: Record<string, string>;
         }
       > | null) ??
         {}) || {};

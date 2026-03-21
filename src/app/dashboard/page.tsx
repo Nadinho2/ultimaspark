@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/accordion";
 import { TopicCompleteButton } from "@/components/TopicCompleteButton";
 import { TopicQuiz } from "@/components/TopicQuiz";
+import { TopicNotes } from "@/components/TopicNotes";
 import { buildTopicQuizContent, topicQuizStorageKey } from "@/lib/topic-quiz";
+import {
+  topicNoteKey,
+  topicVideoNoteKey,
+} from "@/lib/topic-notes-keys";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -44,6 +49,7 @@ export default async function DashboardPage() {
             completedWeeks?: number[];
             completedTopics?: string[];
             quizzes?: Record<string, { passed: boolean; score?: number }>;
+            topicNotes?: Record<string, string>;
           }
         >
       | undefined) ?? {};
@@ -280,17 +286,28 @@ export default async function DashboardPage() {
                                           </div>
 
                                           {topic.videoId ? (
-                                            <div className="mt-3 aspect-video overflow-hidden rounded-lg border border-border shadow-sm">
-                                              <iframe
-                                                width="100%"
-                                                height="100%"
-                                                src={`https://www.youtube.com/embed/${topic.videoId}?rel=0`}
-                                                title={`${course.title} - ${topic.title}`}
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                allowFullScreen
-                                                className="h-full w-full"
+                                            <>
+                                              <div className="mt-3 aspect-video overflow-hidden rounded-lg border border-border shadow-sm">
+                                                <iframe
+                                                  width="100%"
+                                                  height="100%"
+                                                  src={`https://www.youtube.com/embed/${topic.videoId}?rel=0`}
+                                                  title={`${course.title} - ${topic.title}`}
+                                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                  allowFullScreen
+                                                  className="h-full w-full"
+                                                />
+                                              </div>
+                                              <TopicNotes
+                                                courseSlug={course.slug}
+                                                noteKey={topicNoteKey(topic.id)}
+                                                initialNote={
+                                                  courseProgress?.topicNotes?.[
+                                                    topicNoteKey(topic.id)
+                                                  ] ?? ""
+                                                }
                                               />
-                                            </div>
+                                            </>
                                           ) : (
                                             <p className="mt-3 rounded-md border border-dashed border-border bg-bg/40 px-3 py-2 text-xs text-text-secondary">
                                               Video coming soon for this topic.
@@ -443,7 +460,12 @@ export default async function DashboardPage() {
 
                                                   {topicVideos.length > 0 ? (
                                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                                      {topicVideos.map((videoId, idx) => (
+                                                      {topicVideos.map((videoId, idx) => {
+                                                        const nk = topicVideoNoteKey(
+                                                          topic.id,
+                                                          videoId,
+                                                        );
+                                                        return (
                                                         <div
                                                           key={`${course.slug}-${weekKey}-${topic.id}-${videoId}-${idx}`}
                                                           className="space-y-1"
@@ -462,8 +484,17 @@ export default async function DashboardPage() {
                                                               className="h-full w-full"
                                                             />
                                                           </div>
+                                                          <TopicNotes
+                                                            courseSlug={course.slug}
+                                                            noteKey={nk}
+                                                            initialNote={
+                                                              courseProgress?.topicNotes?.[nk] ??
+                                                              ""
+                                                            }
+                                                          />
                                                         </div>
-                                                      ))}
+                                                        );
+                                                      })}
                                                     </div>
                                                   ) : (
                                                     <p className="mt-3 rounded-md border border-dashed border-border bg-bg/40 px-3 py-2 text-xs text-text-secondary">
