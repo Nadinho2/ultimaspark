@@ -61,17 +61,12 @@ export default async function Home() {
       </div>
 
       <div className="mt-10 flex justify-center">
-        <div className="flex flex-col items-center gap-3 sm:flex-row">
-          <button className="inline-flex items-center justify-center rounded-lg border border-border bg-surface px-7 py-2.5 text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark">
-            Join the Waitlist
-          </button>
-          <Link
-            href="/testimonials/submit"
-            className="inline-flex items-center justify-center rounded-lg bg-spark px-6 py-2.5 text-sm font-semibold text-text-primary shadow-sm transition hover:bg-spark/90"
-          >
-            Share a Testimonial
-          </Link>
-        </div>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-lg border border-border bg-surface px-7 py-2.5 text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark"
+        >
+          Join the Waitlist
+        </button>
       </div>
     </section>
   );

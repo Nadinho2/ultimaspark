@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Star } from "lucide-react";
 
@@ -41,18 +40,10 @@ export default async function Testimonials() {
                 No testimonials yet
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-center text-text-secondary">
-                Be the first to share your experience! Submit one here.
+            <CardContent>
+              <p className="text-center text-sm text-text-secondary">
+                Check back soon for learner stories.
               </p>
-              <div className="flex justify-center">
-                <Link
-                  href="/testimonials/submit"
-                  className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90"
-                >
-                  Submit testimonial
-                </Link>
-              </div>
             </CardContent>
           </Card>
         </div>
