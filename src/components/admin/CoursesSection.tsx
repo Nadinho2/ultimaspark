@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,23 @@ function flattenTopicsForNotes(course: AdminCourseRow) {
 export function CoursesSection() {
   const [courses, setCourses] = useState<AdminCourseRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [saving, setSaving] = useState(false);
+
+  const runMutation = useCallback(async (fn: () => Promise<void>) => {
+    setSaving(true);
+    setActionError(null);
+    try {
+      await fn();
+    } catch (e) {
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : "Request failed. Check the browser console and try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, []);
   /** Row index being edited (stable when slug field changes in the form) */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   /** Course slug when Edit was opened — sent as originalSlug to the server */
@@ -81,6 +97,28 @@ export function CoursesSection() {
   const [editLiveVideos, setEditLiveVideos] = useState<Record<string, string>>({});
   const router = useRouter();
 
+  /** Reset add-video form when opening "Manage Videos" or switching course */
+  useEffect(() => {
+    if (videoFormSlug) {
+      setNewVideo({
+        week: 1,
+        topicId: "",
+        youtubeId: "",
+      });
+    }
+  }, [videoFormSlug]);
+
+  /** Reset live-video fields when opening the panel or switching course (fresh cohort/topic picks) */
+  useEffect(() => {
+    if (!liveVideoSlug) return;
+    setNewLiveVideo({
+      cohortId: "",
+      week: 1,
+      topicId: "",
+      youtubeId: "",
+    });
+  }, [liveVideoSlug]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -110,27 +148,26 @@ export function CoursesSection() {
   }, []);
 
   const handleCreate = () => {
-    setActionError(null);
-    startTransition(async () => {
+    void runMutation(async () => {
       const fd = new FormData();
       fd.append("title", newCourse.title);
       if (newCourse.slug) fd.append("slug", newCourse.slug);
       fd.append("description", newCourse.description);
       fd.append("weeks", String(newCourse.weeks));
       const result = await createCourse(fd);
-      if (result.success) {
-        const refreshed = await adminListCourses();
-        setCourses(refreshed);
-        setNewCourse({
-          title: "",
-          slug: "",
-          description: "",
-          weeks: 6,
-        });
-        router.refresh();
-      } else {
+      if (!result.success) {
         setActionError(result.error ?? "Could not create course.");
+        return;
       }
+      const refreshed = await adminListCourses();
+      setCourses(refreshed);
+      setNewCourse({
+        title: "",
+        slug: "",
+        description: "",
+        weeks: 6,
+      });
+      router.refresh();
     });
   };
 
@@ -138,8 +175,7 @@ export function CoursesSection() {
     if (editingIndex === null || editingOriginalSlug === null) return;
     const row = courses[editingIndex];
     if (!row) return;
-    setActionError(null);
-    startTransition(async () => {
+    void runMutation(async () => {
       const fd = new FormData();
       fd.append("originalSlug", editingOriginalSlug);
       fd.append("title", row.title);
@@ -147,15 +183,15 @@ export function CoursesSection() {
       fd.append("description", row.description);
       fd.append("weeks", String(row.weeks));
       const result = await updateCourse(fd);
-      if (result.success) {
-        const refreshed = await adminListCourses();
-        setCourses(refreshed);
-        setEditingIndex(null);
-        setEditingOriginalSlug(null);
-        router.refresh();
-      } else {
+      if (!result.success) {
         setActionError(result.error ?? "Could not save course.");
+        return;
       }
+      const refreshed = await adminListCourses();
+      setCourses(refreshed);
+      setEditingIndex(null);
+      setEditingOriginalSlug(null);
+      router.refresh();
     });
   };
 
@@ -166,19 +202,18 @@ export function CoursesSection() {
     );
     if (!confirmDelete) return;
 
-    setActionError(null);
-    startTransition(async () => {
+    void runMutation(async () => {
       const result = await deleteCourse(slug);
-      if (result.success) {
-        setCourses((prev) => prev.filter((c) => c.slug !== slug));
-        if (editingOriginalSlug === slug) {
-          setEditingIndex(null);
-          setEditingOriginalSlug(null);
-        }
-        router.refresh();
-      } else {
+      if (!result.success) {
         setActionError(result.error ?? "Could not delete course.");
+        return;
       }
+      setCourses((prev) => prev.filter((c) => c.slug !== slug));
+      if (editingOriginalSlug === slug) {
+        setEditingIndex(null);
+        setEditingOriginalSlug(null);
+      }
+      router.refresh();
     });
   };
 
@@ -199,6 +234,11 @@ export function CoursesSection() {
         >
           {actionError}
         </div>
+      )}
+      {saving && (
+        <p className="text-xs font-medium text-primary" aria-live="polite">
+          Saving…
+        </p>
       )}
       <p className="rounded-lg border border-border/80 bg-bg/40 px-3 py-2 text-[11px] leading-relaxed text-text-secondary">
         <span className="font-medium text-text-primary">Deploy note: </span>
@@ -260,21 +300,37 @@ export function CoursesSection() {
             type="button"
             size="sm"
             className="bg-spark text-bg hover:bg-spark/90"
-            disabled={isPending || !newCourse.title}
+            disabled={saving || !newCourse.title.trim()}
             onClick={handleCreate}
           >
             Create Course
           </Button>
         </div>
+        {!newCourse.title.trim() && (
+          <p className="text-[11px] text-text-secondary">
+            Enter a <strong className="text-text-primary">title</strong> to enable Create Course.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
         {courses.length === 0 ? (
           <p className="text-sm text-text-secondary">No courses configured.</p>
         ) : (
-          courses.map((c, index) => (
+          courses.map((c, index) => {
+            /** Slug at edit start — keeps nested list keys stable if course slug is edited */
+            const stableKey =
+              editingIndex === index && editingOriginalSlug
+                ? editingOriginalSlug
+                : c.slug;
+
+            return (
             <div
-              key={c.slug}
+              key={
+                editingIndex === index && editingOriginalSlug
+                  ? `editing-${editingOriginalSlug}`
+                  : c.slug
+              }
               className="flex min-w-0 flex-col gap-2 rounded-lg border border-primary/15 bg-surface/60 p-3"
             >
               <div className="min-w-0 flex-1 space-y-1">
@@ -327,7 +383,7 @@ export function CoursesSection() {
                   <div className="space-y-1 text-[11px]">
                     {(((c as any).weeksDetail as any[]) ?? []).length > 0 ? (
                       (((c as any).weeksDetail as any[]) ?? []).map((week, wi) => (
-                        <div key={`${c.slug}-video-week-${wi + 1}`} className="rounded border border-primary/15 p-2">
+                        <div key={`${stableKey}-video-week-${wi + 1}`} className="rounded border border-primary/15 p-2">
                           <p className="font-semibold text-text-primary">Week {wi + 1}: {week.title}</p>
                           <ul className="mt-1 list-none space-y-2 text-text-secondary">
                             {(week.topics ?? []).map((topic: any) => (
@@ -337,7 +393,7 @@ export function CoursesSection() {
                                 topicId={topic.id}
                                 topicTitle={topic.title}
                                 initialVideoId={topic.videoId}
-                                isBusy={isPending}
+                                isBusy={saving}
                                 onError={setActionError}
                                 onSaved={async () => {
                                   const refreshed = await adminListCourses();
@@ -367,7 +423,7 @@ export function CoursesSection() {
                         className="h-9 rounded-md border border-primary/25 bg-surface px-2 text-[11px] text-text-primary outline-none focus:border-spark"
                       >
                         {Array.from({ length: c.weeks }).map((_, idx) => (
-                          <option key={`${c.slug}-week-option-${idx + 1}`} value={idx + 1}>
+                          <option key={`${stableKey}-week-option-${idx + 1}`} value={idx + 1}>
                             Week {idx + 1}
                           </option>
                         ))}
@@ -405,6 +461,7 @@ export function CoursesSection() {
                       />
                       <div className="sm:col-span-3 flex justify-end gap-2 pt-1">
                         <Button
+                          type="button"
                           size="xs"
                           variant="outline"
                           className="border-secondary/60 text-secondary hover:bg-secondary/10"
@@ -420,11 +477,12 @@ export function CoursesSection() {
                           Cancel
                         </Button>
                         <Button
+                          type="button"
                           size="xs"
                           className="bg-spark text-bg hover:bg-spark/90"
-                          disabled={isPending || !newVideo.youtubeId || !newVideo.topicId}
+                          disabled={saving || !newVideo.youtubeId || !newVideo.topicId}
                           onClick={() =>
-                            startTransition(async () => {
+                            void runMutation(async () => {
                               const fd = new FormData();
                               fd.append("slug", c.slug);
                               fd.append("week", String(newVideo.week));
@@ -488,7 +546,7 @@ export function CoursesSection() {
                             (week.topics ?? []).map((t) => t.title).join("\n");
                           return (
                             <div
-                              key={`${c.slug}-week-${index + 1}`}
+                              key={`${stableKey}-week-${index + 1}`}
                               className="rounded-md border border-primary/25 bg-surface/80 p-2"
                             >
                               <p className="text-[11px] font-semibold text-primary">
@@ -598,10 +656,9 @@ export function CoursesSection() {
                           type="button"
                           size="xs"
                           className="bg-spark text-bg hover:bg-spark/90"
-                          disabled={isPending}
+                          disabled={saving}
                           onClick={() =>
-                            startTransition(async () => {
-                              setActionError(null);
+                            void runMutation(async () => {
                               const weeksDetail =
                                 ((c as any).weeksDetail as any[]) ?? [];
                               const fd = new FormData();
@@ -674,9 +731,9 @@ export function CoursesSection() {
                             type="button"
                             size="xs"
                             className="bg-growth text-bg hover:bg-growth/90"
-                            disabled={isPending}
+                            disabled={saving}
                             onClick={() =>
-                              startTransition(async () => {
+                              void runMutation(async () => {
                                 setActionError(null);
                                 const fd = new FormData();
                                 fd.append("slug", c.slug);
@@ -728,7 +785,7 @@ export function CoursesSection() {
                     type="button"
                     size="sm"
                     className="bg-spark text-bg hover:bg-spark/90"
-                    disabled={isPending}
+                    disabled={saving}
                     onClick={handleUpdate}
                   >
                     Save
@@ -738,13 +795,14 @@ export function CoursesSection() {
                     type="button"
                     size="sm"
                     variant="destructive"
-                    disabled={isPending}
+                    disabled={saving}
                     onClick={() => handleDelete(c.slug)}
                   >
                     Delete
                   </Button>
                 )}
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   className="border-primary/60 text-primary hover:bg-primary/10"
@@ -757,6 +815,7 @@ export function CoursesSection() {
                   {videoFormSlug === c.slug ? "Close Videos" : "Manage Videos"}
                 </Button>
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   className="border-growth/60 text-growth hover:bg-growth/10"
@@ -769,6 +828,7 @@ export function CoursesSection() {
                   {curriculumSlug === c.slug ? "Close Curriculum" : "Curriculum"}
                 </Button>
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   className="border-primary/60 text-primary hover:bg-primary/10"
@@ -799,6 +859,7 @@ export function CoursesSection() {
                     : "Instructor notes"}
                 </Button>
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   className="border-spark/60 text-spark hover:bg-spark/10"
@@ -828,7 +889,7 @@ export function CoursesSection() {
                     >
                       <option value="">Select cohort</option>
                       {((c as any).cohorts ?? []).map((cohortId: string) => (
-                        <option key={`${c.slug}-cohort-${cohortId}`} value={cohortId}>
+                        <option key={`${stableKey}-cohort-${cohortId}`} value={cohortId}>
                           {cohortId}
                         </option>
                       ))}
@@ -844,7 +905,7 @@ export function CoursesSection() {
                       }
                     >
                       {Array.from({ length: c.weeks }).map((_, idx) => (
-                        <option key={`${c.slug}-live-week-${idx + 1}`} value={idx + 1}>
+                        <option key={`${stableKey}-live-week-${idx + 1}`} value={idx + 1}>
                           Week {idx + 1}
                         </option>
                       ))}
@@ -863,7 +924,7 @@ export function CoursesSection() {
                         (((c as any).weeksDetail as any[])?.[newLiveVideo.week - 1]?.topics as any[]) ??
                         []
                       ).map((topic: any) => (
-                        <option key={`${c.slug}-live-topic-${topic.id}`} value={topic.id}>
+                        <option key={`${stableKey}-live-topic-${topic.id}`} value={topic.id}>
                           {topic.title}
                         </option>
                       ))}
@@ -903,7 +964,7 @@ export function CoursesSection() {
                             ? { __general__: topicBucket }
                             : (topicBucket ?? {});
                           return (
-                            <div key={`${c.slug}-${newLiveVideo.cohortId}-${weekKey}`} className="space-y-2 rounded border border-border/70 p-2">
+                            <div key={`${stableKey}-${newLiveVideo.cohortId}-${weekKey}`} className="space-y-2 rounded border border-border/70 p-2">
                               <p className="text-[11px] font-medium text-text-primary">{weekKey}</p>
                               {Object.entries(normalizedTopicBucket).map(([topicId, videos]) => (
                                 <div key={`${weekKey}-${topicId}`} className="rounded border border-border/60 p-2">
@@ -927,11 +988,12 @@ export function CoursesSection() {
                                             className="h-8 bg-surface text-[11px] text-text-primary"
                                           />
                                           <Button
+                                            type="button"
                                             size="xs"
                                             variant="outline"
-                                            disabled={isPending || !editValue.trim()}
+                                            disabled={saving || !editValue.trim()}
                                             onClick={() =>
-                                              startTransition(async () => {
+                                              void runMutation(async () => {
                                                 const fd = new FormData();
                                                 fd.append("courseSlug", c.slug);
                                                 fd.append("cohortId", newLiveVideo.cohortId);
@@ -956,11 +1018,12 @@ export function CoursesSection() {
                                             Save
                                           </Button>
                                           <Button
+                                            type="button"
                                             size="xs"
                                             variant="destructive"
-                                            disabled={isPending}
+                                            disabled={saving}
                                             onClick={() =>
-                                              startTransition(async () => {
+                                              void runMutation(async () => {
                                                 const fd = new FormData();
                                                 fd.append("courseSlug", c.slug);
                                                 fd.append("cohortId", newLiveVideo.cohortId);
@@ -1004,12 +1067,13 @@ export function CoursesSection() {
                         className="min-w-0 bg-surface text-[11px] text-text-primary"
                       />
                       <Button
+                        type="button"
                         size="xs"
                         variant="outline"
                         className="border-spark/50 text-spark hover:bg-spark/10"
-                        disabled={isPending || !newCohortId.trim()}
+                        disabled={saving || !newCohortId.trim()}
                         onClick={() =>
-                          startTransition(async () => {
+                          void runMutation(async () => {
                             const fd = new FormData();
                             fd.append("courseSlug", c.slug);
                             fd.append("cohortId", newCohortId.trim());
@@ -1036,16 +1100,17 @@ export function CoursesSection() {
                     </div>
                     <div className="flex justify-end">
                     <Button
+                      type="button"
                       size="xs"
                       className="bg-spark text-bg hover:bg-spark/90"
                       disabled={
-                        isPending ||
+                        saving ||
                         !newLiveVideo.youtubeId ||
                         !newLiveVideo.cohortId ||
                         !newLiveVideo.topicId
                       }
                       onClick={() =>
-                        startTransition(async () => {
+                        void runMutation(async () => {
                           const fd = new FormData();
                           fd.append("courseSlug", c.slug);
                           fd.append("cohortId", newLiveVideo.cohortId);
@@ -1078,7 +1143,8 @@ export function CoursesSection() {
                 </div>
               )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -1103,7 +1169,7 @@ function TopicVideoAdminRow({
   onSaved: () => Promise<void>;
 }) {
   const [val, setVal] = useState(initialVideoId ?? "");
-  const [pending, startTransition] = useTransition();
+  const [rowSaving, setRowSaving] = useState(false);
 
   useEffect(() => {
     setVal(initialVideoId ?? "");
@@ -1111,18 +1177,25 @@ function TopicVideoAdminRow({
 
   const run = (clear: boolean) => {
     onError(null);
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.append("slug", courseSlug);
-      fd.append("topicId", topicId);
-      fd.append("youtubeId", clear ? "" : val.trim());
-      const r = await setTopicVideoId(fd);
-      if (!r.success) {
-        onError(r.error ?? "Could not update topic video");
-        return;
+    void (async () => {
+      setRowSaving(true);
+      try {
+        const fd = new FormData();
+        fd.append("slug", courseSlug);
+        fd.append("topicId", topicId);
+        fd.append("youtubeId", clear ? "" : val.trim());
+        const r = await setTopicVideoId(fd);
+        if (!r.success) {
+          onError(r.error ?? "Could not update topic video");
+          return;
+        }
+        await onSaved();
+      } catch (e) {
+        onError(e instanceof Error ? e.message : "Request failed");
+      } finally {
+        setRowSaving(false);
       }
-      await onSaved();
-    });
+    })();
   };
 
   return (
@@ -1139,7 +1212,7 @@ function TopicVideoAdminRow({
           type="button"
           size="xs"
           className="bg-spark text-bg hover:bg-spark/90"
-          disabled={isBusy || pending}
+          disabled={isBusy || rowSaving}
           onClick={() => run(false)}
         >
           Save video
@@ -1149,7 +1222,7 @@ function TopicVideoAdminRow({
           size="xs"
           variant="outline"
           className="border-secondary/60 text-secondary hover:bg-secondary/10"
-          disabled={isBusy || pending || !initialVideoId}
+          disabled={isBusy || rowSaving || !initialVideoId}
           onClick={() => run(true)}
         >
           Clear video
