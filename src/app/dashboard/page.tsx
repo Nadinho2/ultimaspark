@@ -19,6 +19,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { TopicCompleteButton } from "@/components/TopicCompleteButton";
+import { TopicQuiz } from "@/components/TopicQuiz";
+import { buildTopicQuizContent, topicQuizStorageKey } from "@/lib/topic-quiz";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -294,6 +296,18 @@ export default async function DashboardPage() {
                                               Video coming soon for this topic.
                                             </p>
                                           )}
+                                          <TopicQuiz
+                                            courseSlug={course.slug}
+                                            topicId={topic.id}
+                                            content={buildTopicQuizContent(
+                                              topic.title,
+                                            )}
+                                            passed={
+                                              courseProgress?.quizzes?.[
+                                                topicQuizStorageKey(topic.id)
+                                              ]?.passed ?? false
+                                            }
+                                          />
                                         </div>
                                       ))
                                     )}
@@ -456,6 +470,20 @@ export default async function DashboardPage() {
                                                       Live session video will appear here after the class.
                                                     </p>
                                                   )}
+                                                  <TopicQuiz
+                                                    courseSlug={course.slug}
+                                                    topicId={topic.id}
+                                                    content={buildTopicQuizContent(
+                                                      topic.title,
+                                                    )}
+                                                    passed={
+                                                      courseProgress?.quizzes?.[
+                                                        topicQuizStorageKey(
+                                                          topic.id,
+                                                        )
+                                                      ]?.passed ?? false
+                                                    }
+                                                  />
                                                 </div>
                                               );
                                             })}
@@ -516,8 +544,7 @@ export default async function DashboardPage() {
                   No active enrollments yet
                 </p>
                 <p className="mt-2">
-                  Get started by exploring our flagship AI Automation and Vibe
-                  Coding cohorts.
+                  Get started by exploring our courses and cohorts.
                 </p>
                 <a
                   href="/courses"

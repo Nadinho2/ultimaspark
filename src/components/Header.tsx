@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
@@ -44,7 +39,13 @@ export function Header() {
             Courses
           </Link>
           <Link href="/about" className="transition-colors hover:text-spark">
-            About
+            About Us
+          </Link>
+          <Link
+            href="/our-goals"
+            className="transition-colors hover:text-spark"
+          >
+            Our Goals
           </Link>
           {user && (
             <Link
@@ -86,16 +87,18 @@ export function Header() {
             />
           ) : (
             <>
-              <SignInButton mode="modal">
-                <button className="hidden rounded-full border border-border bg-bg px-4 py-1.5 text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg md:inline-flex">
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="hidden rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg md:inline-flex">
-                  Sign up
-                </button>
-              </SignUpButton>
+              <Link
+                href="/sign-in"
+                className="hidden rounded-full border border-border bg-bg px-4 py-1.5 text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg md:inline-flex"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="hidden rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg md:inline-flex"
+              >
+                Sign up
+              </Link>
             </>
           )}
 
@@ -133,7 +136,14 @@ export function Header() {
               className="py-1 transition-colors hover:text-spark"
               onClick={() => setOpen(false)}
             >
-              About
+              About Us
+            </Link>
+            <Link
+              href="/our-goals"
+              className="py-1 transition-colors hover:text-spark"
+              onClick={() => setOpen(false)}
+            >
+              Our Goals
             </Link>
             {user && (
               <Link
@@ -148,16 +158,20 @@ export function Header() {
 
           {!user && (
             <div className="mt-3 flex gap-2">
-              <SignInButton mode="modal">
-                <button className="flex-1 rounded-full border border-primary/30 bg-bg px-4 py-1.5 text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg">
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="flex-1 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg">
-                  Sign up
-                </button>
-              </SignUpButton>
+              <Link
+                href="/sign-in"
+                className="flex-1 rounded-full border border-primary/30 bg-bg px-4 py-1.5 text-center text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                onClick={() => setOpen(false)}
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="flex-1 rounded-full bg-primary px-4 py-1.5 text-center text-sm font-medium text-white shadow-sm transition hover:bg-spark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                onClick={() => setOpen(false)}
+              >
+                Sign up
+              </Link>
             </div>
           )}
         </div>

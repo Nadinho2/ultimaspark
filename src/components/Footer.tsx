@@ -45,7 +45,23 @@ export function Footer() {
               <ul className="space-y-1 text-sm text-text-secondary">
                 <li>
                   <Link href="/about" className="transition-colors hover:text-spark">
-                    About
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/our-goals"
+                    className="transition-colors hover:text-spark"
+                  >
+                    Our Goals
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/privacy-policy"
+                    className="transition-colors hover:text-spark"
+                  >
+                    Privacy Policy
                   </Link>
                 </li>
                 <li>

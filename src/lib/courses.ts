@@ -50,6 +50,18 @@ export async function getCourses(): Promise<Course[]> {
   }
 }
 
+/** Legacy slugs still in `courses.json` / redirect routes; hidden from marketing pages. */
+export const HIDDEN_FROM_MARKETING_SLUGS = new Set([
+  "ai-automation",
+  "vibe-coding",
+]);
+
+/** Courses shown on Home and /courses (excludes legacy hardcoded tracks). */
+export async function getMarketingCourses(): Promise<Course[]> {
+  const courses = await getCourses();
+  return courses.filter((c) => !HIDDEN_FROM_MARKETING_SLUGS.has(c.slug));
+}
+
 export async function getCoursesBySlug(): Promise<Record<string, Course>> {
   const courses = await getCourses();
   return courses.reduce(

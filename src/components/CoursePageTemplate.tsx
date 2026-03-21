@@ -7,13 +7,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { EnrollButton } from "@/components/EnrollButton";
+import type { CourseEnrollmentSnapshot } from "@/lib/course-enrollment";
 import type { Course } from "@/lib/courses";
 
 type Props = {
   course: Course;
+  enrollment: CourseEnrollmentSnapshot;
 };
 
-export function CoursePageTemplate({ course }: Props) {
+export function CoursePageTemplate({ course, enrollment }: Props) {
   return (
     <section className="min-h-screen bg-bg py-12 px-4 sm:px-6 md:px-10 lg:px-12">
       <div className="mx-auto flex max-w-5xl flex-col gap-10">
@@ -27,7 +29,10 @@ export function CoursePageTemplate({ course }: Props) {
           <p className="mt-4 max-w-2xl text-base text-text-secondary sm:text-lg">
             {course.description}
           </p>
-          <EnrollButton courseSlug={course.slug} />
+          <EnrollButton
+            courseSlug={course.slug}
+            enrollment={enrollment}
+          />
         </header>
 
         <div className="grid gap-10 lg:grid-cols-[2fr,1fr]">

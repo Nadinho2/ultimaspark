@@ -1,19 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTransition, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import type { CourseEnrollmentSnapshot } from "@/lib/course-enrollment";
 import { requestEnrollment } from "@/app/actions/pendingEnrollment";
 
 type EnrollButtonProps = {
   courseSlug: string;
+  enrollment: CourseEnrollmentSnapshot;
   className?: string;
 };
 
-export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
+export function EnrollButton({
+  courseSlug,
+  enrollment,
+  className,
+}: EnrollButtonProps) {
   const router = useRouter();
-  const { user } = useUser();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,23 +27,17 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
   );
   const [preferredCohort, setPreferredCohort] = useState("");
 
-  const enrolled =
-    (user?.publicMetadata?.enrolledCourses as string[] | undefined) ?? [];
-  const isEnrolled = enrolled.includes(courseSlug);
-
-  const pending =
-    (user?.publicMetadata?.pendingEnrollments as
-      | {
-          courseSlug: string;
-          requestedAt: string;
-          message?: string;
-          enrollmentType?: "subscription" | "cohort";
-          preferredCohort?: string;
-        }[]
-      | undefined) ?? [];
-  const isPendingApproval = pending.some((p) => p.courseSlug === courseSlug);
+  const { isSignedIn, isEnrolled, isPendingApproval } = enrollment;
 
   const handleClick = () => {
+    if (!isSignedIn) {
+      const returnPath = pathname || "/";
+      router.push(
+        `/sign-in?redirect_url=${encodeURIComponent(returnPath)}`,
+      );
+      return;
+    }
+
     if (isEnrolled || isPendingApproval) return;
 
     setMessage(null);
@@ -70,7 +69,7 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
     ? "Enrolled"
     : isPendingApproval
       ? "Pending Approval"
-    : isPending
+      : isPending
         ? "Submitting..."
         : "Request Enrollment";
 
@@ -127,4 +126,3 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
     </div>
   );
 }
-

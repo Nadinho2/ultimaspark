@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { getCourses } from "@/lib/courses";
+import { getMarketingCourses } from "@/lib/courses";
 import Testimonials from "@/components/Testimonials";
 
 export default async function Home() {
-  const courses = await getCourses();
+  const courses = await getMarketingCourses();
 
   return (
     <section className="py-12 sm:py-16 lg:py-20">
@@ -12,9 +12,8 @@ export default async function Home() {
           Ignite Your Future with UltimaSpark Academy
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base text-text-secondary sm:text-lg lg:text-xl">
-          Master cutting-edge skills in AI Automation, Vibe Coding, and more through
-          intensive 6-week cohorts. Hands-on, project-based learning for the next
-          generation of creators.
+          Master cutting-edge skills through intensive cohorts and hands-on,
+          project-based learning — built for the next generation of creators.
         </p>
         <div className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-2">
           <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-secondary">

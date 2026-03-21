@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { subscribeNewsletter } from "@/app/actions/newsletter";
@@ -28,7 +28,7 @@ function SubmitButton() {
 }
 
 export function FooterNewsletterForm() {
-  const [state, formAction] = useFormState(subscribeNewsletter, initialState);
+  const [state, formAction] = useActionState(subscribeNewsletter, initialState);
 
   return (
     <div className="space-y-2">

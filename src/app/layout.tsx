@@ -33,11 +33,12 @@ export default function RootLayout(
   const { children } = props;
 
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-bg text-text-primary`}
-        >
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-bg text-text-primary`}
+      >
+        {/* `dynamic` avoids static prerender issues with Next.js 15+ where auth UI never hydrates (blank pages). */}
+        <ClerkProvider dynamic>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <div className="flex min-h-screen flex-col">
               <Header />
@@ -47,8 +48,8 @@ export default function RootLayout(
               <Footer />
             </div>
           </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
