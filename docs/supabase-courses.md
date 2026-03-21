@@ -45,6 +45,7 @@ Redeploy so the new env var is available. Admin saves on production will update 
 
 ## Troubleshooting
 
+- **“Cannot save courses” / read-only on Vercel**: The app must see **both** `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` at **runtime** on the server. After adding them in Vercel, click **Redeploy** (env vars are baked in at build for some routes, and always need a new deployment to be sure). If you use a Preview deployment, add the same vars under **Preview** or they won’t be set there.
 - **Empty catalog**: Run the seed script, or add rows in the Table Editor (`data` column = full course JSON object).
-- **Permission errors**: Confirm you used the **service role** key, not the anon key, for `SUPABASE_SERVICE_ROLE_KEY`.
+- **Permission errors** (`permission denied for table UltimaSparkAcademyCourse`): Almost always the **wrong key** in Vercel — `SUPABASE_SERVICE_ROLE_KEY` must be the **`service_role`** JWT from Supabase → **Project Settings** → **API** (long secret), **not** `NEXT_PUBLIC_SUPABASE_ANON_KEY` / “anon public”. The app now errors early if the JWT `role` is not `service_role`. If the key is correct, run the follow-up migration `supabase/migrations/20260321190000_UltimaSparkAcademyCourse_grants_and_policies.sql` in the SQL Editor (GRANT + RLS policy for `service_role`).
 - **Table name**: The app uses `"UltimaSparkAcademyCourse"` (PascalCase), matching `UltimaSparkAcademyTestimonial`.

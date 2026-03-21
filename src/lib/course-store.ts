@@ -82,12 +82,24 @@ async function writeCoursesToSupabase(courses: Course[]): Promise<void> {
   }
 }
 
+/** Vercel / Lambda: no writable project disk — course JSON cannot be saved without Supabase. */
+function isServerlessReadOnlyFilesystem(): boolean {
+  return (
+    process.env.VERCEL === "1" ||
+    !!process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    !!process.env.NETLIFY
+  );
+}
+
+const SUPABASE_SETUP_HELP =
+  "Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel (or your host) → Environment Variables, then Redeploy. Copy the service_role key from Supabase → Project Settings → API (not the anon key). Run supabase/migrations SQL if the table is missing. See docs/supabase-courses.md.";
+
 /** User-facing message when persistence fails (filesystem or Supabase). */
 export function persistErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof Error) {
     const m = err.message;
     if (/read-only|EROFS|EPERM|EACCES|ENOTSUP/i.test(m)) {
-      return "Cannot save courses on this host (serverless deploys are often read-only). Set SUPABASE_SERVICE_ROLE_KEY or save courses in Supabase — see docs in supabase/migrations.";
+      return `Cannot save courses on this host (filesystem is read-only). ${SUPABASE_SETUP_HELP}`;
     }
     return m;
   }
@@ -127,12 +139,18 @@ export async function readCourses(): Promise<Course[]> {
 }
 
 /**
- * Write courses: Supabase when configured; otherwise JSON file (local dev).
+ * Write courses: Supabase when configured; otherwise JSON file (local dev only).
+ * On Vercel/serverless, the filesystem is read-only — require Supabase or fail with a clear error.
  */
 export async function writeCourses(courses: Course[]): Promise<void> {
   if (isSupabaseCoursesConfigured()) {
     await writeCoursesToSupabase(courses);
     return;
+  }
+  if (isServerlessReadOnlyFilesystem()) {
+    throw new Error(
+      `Course saves need a database on this deployment. ${SUPABASE_SETUP_HELP}`,
+    );
   }
   await writeCoursesToFile(courses);
 }
