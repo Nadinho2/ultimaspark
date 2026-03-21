@@ -107,9 +107,14 @@ export function Footer() {
           <p>
             © {new Date().getFullYear()} UltimaSpark Academy. All rights reserved.
           </p>
-          <p className="text-text-secondary">
-            Warm minimal • soft spark accents
-          </p>
+          <div className="flex flex-col items-end gap-1 sm:text-right">
+            <p className="text-text-secondary">
+              Warm minimal • soft spark accents
+            </p>
+            <p className="font-mono text-[10px] text-growth" title="Visible marker to verify latest deploy">
+              deploy-sync-20260322
+            </p>
+          </div>
         </div>
       </div>
     </footer>
