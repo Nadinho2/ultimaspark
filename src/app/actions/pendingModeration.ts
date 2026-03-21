@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { userHasAdminRole } from "@/lib/admin-role";
+import { listAllClerkUsers } from "@/lib/clerk-list-all-users";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import WelcomeOnApproval from "@/emails/WelcomeOnApproval";
@@ -30,8 +31,7 @@ export async function listPendingEnrollments(): Promise<PendingRow[]> {
   const me = await client.users.getUser(userId);
   if (!userHasAdminRole(me)) return [];
 
-  const list = await client.users.getUserList({});
-  const users = list.data ?? [];
+  const users = await listAllClerkUsers(client);
 
   const rows: PendingRow[] = [];
   for (const u of users) {

@@ -12,6 +12,7 @@ import {
   persistErrorMessage,
 } from "@/lib/course-store";
 import { ADMIN_ROLE_HELP, userHasAdminRole } from "@/lib/admin-role";
+import { listAllClerkUsers } from "@/lib/clerk-list-all-users";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -35,8 +36,7 @@ async function requireAdmin() {
 
 export async function adminListUsers() {
   const { client } = await requireAdmin();
-  const list = await client.users.getUserList({});
-  const users = list.data ?? [];
+  const users = await listAllClerkUsers(client);
 
   type AdminUserRow = {
     id: string;
@@ -209,8 +209,7 @@ export async function adminListCourses() {
   const courses = await readCourses();
 
   const client = await clerkClient();
-  const list = await client.users.getUserList({});
-  const users = list.data ?? [];
+  const users = await listAllClerkUsers(client);
 
   const enrolledCounts: Record<string, number> = {};
   for (const c of courses) {
@@ -318,8 +317,7 @@ export async function deleteCourse(slug: string): Promise<AdminResult> {
     await writeCourses(next);
 
     // Clean up user metadata
-    const list = await client.users.getUserList({});
-    const users = list.data ?? [];
+    const users = await listAllClerkUsers(client);
     for (const u of users) {
       const enrolled =
         (u.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
@@ -449,8 +447,7 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
           }
         } else {
           // Full mode: send to all enrolled learners for this course.
-          const list = await client.users.getUserList({});
-          const users = list.data ?? [];
+          const users = await listAllClerkUsers(client);
 
           for (const u of users) {
             const enrolled =
@@ -616,8 +613,7 @@ export async function addLiveSessionVideo(formData: FormData): Promise<AdminResu
     };
     await writeCourses(courses);
 
-    const list = await client.users.getUserList({});
-    const users = list.data ?? [];
+    const users = await listAllClerkUsers(client);
 
     for (const u of users) {
       const enrolledCourses =
