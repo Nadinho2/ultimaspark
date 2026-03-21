@@ -32,6 +32,8 @@ export type Course = {
     Record<string, string[] | Record<string, string[]>>
   >;
   weeksDetail?: CourseWeek[];
+  /** Shown to all learners above "Your notes" — keyed by topic id. */
+  topicInstructorNotes?: Record<string, string>;
   // Legacy videos array kept for backward compatibility.
   videos?: CourseVideo[];
 };

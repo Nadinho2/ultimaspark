@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { render } from "@react-email/render";
 import NewVideoAdded from "@/emails/NewVideoAdded";
 import * as React from "react";
+import { extractYouTubeId } from "@/lib/courses";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -40,6 +41,7 @@ type Course = {
     Record<string, string[] | Record<string, string[]>>
   >;
   weeksDetail?: CourseWeek[];
+  topicInstructorNotes?: Record<string, string>;
   videos?: { week: number; title: string; youtubeId: string }[];
 };
 
@@ -423,10 +425,7 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
       (formData.get("title") as string | null)?.trim() ?? `Week ${week}`;
     const youtubeIdInput =
       (formData.get("youtubeId") as string | null)?.trim() ?? "";
-    const youtubeId = youtubeIdInput
-      .replace(/^https?:\/\/(www\.)?youtu\.be\//i, "")
-      .replace(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=/i, "")
-      .trim();
+    const youtubeId = extractYouTubeId(youtubeIdInput);
 
     if (!slug || !youtubeId) {
       return { success: false, error: "Slug and YouTube ID are required" };
@@ -558,7 +557,7 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
     return { success: true, message: "Video added" };
   } catch (err) {
     console.error("addCourseVideo error", err);
-    return { success: false, error: "Failed to add video" };
+    return { success: false, error: fsErrorMessage(err, "Failed to add video") };
   }
 }
 
@@ -646,10 +645,7 @@ export async function addLiveSessionVideo(formData: FormData): Promise<AdminResu
       };
     }
 
-    const youtubeId = youtubeIdInput
-      .replace(/^https?:\/\/(www\.)?youtu\.be\//i, "")
-      .replace(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=/i, "")
-      .trim();
+    const youtubeId = extractYouTubeId(youtubeIdInput);
 
     const courses = await readCourses();
     const idx = courses.findIndex((c) => c.slug === courseSlug);
@@ -733,7 +729,10 @@ export async function addLiveSessionVideo(formData: FormData): Promise<AdminResu
     return { success: true, message: "Live session video saved for this cohort" };
   } catch (err) {
     console.error("addLiveSessionVideo error", err);
-    return { success: false, error: "Failed to add live session video" };
+    return {
+      success: false,
+      error: fsErrorMessage(err, "Failed to add live session video"),
+    };
   }
 }
 
@@ -769,7 +768,10 @@ export async function createCourseCohort(formData: FormData): Promise<AdminResul
     return { success: true, message: "Cohort created" };
   } catch (err) {
     console.error("createCourseCohort error", err);
-    return { success: false, error: "Failed to create cohort" };
+    return {
+      success: false,
+      error: fsErrorMessage(err, "Failed to create cohort"),
+    };
   }
 }
 
@@ -821,7 +823,10 @@ export async function updateCohortLiveVideo(formData: FormData): Promise<AdminRe
     return { success: true, message: "Cohort video updated" };
   } catch (err) {
     console.error("updateCohortLiveVideo error", err);
-    return { success: false, error: "Failed to update cohort video" };
+    return {
+      success: false,
+      error: fsErrorMessage(err, "Failed to update cohort video"),
+    };
   }
 }
 
@@ -866,7 +871,110 @@ export async function deleteCohortLiveVideo(formData: FormData): Promise<AdminRe
     return { success: true, message: "Cohort video deleted" };
   } catch (err) {
     console.error("deleteCohortLiveVideo error", err);
-    return { success: false, error: "Failed to delete cohort video" };
+    return {
+      success: false,
+      error: fsErrorMessage(err, "Failed to delete cohort video"),
+    };
+  }
+}
+
+export async function setTopicVideoId(formData: FormData): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const slug = (formData.get("slug") as string | null)?.trim();
+    const topicId = (formData.get("topicId") as string | null)?.trim();
+    const raw = (formData.get("youtubeId") as string | null)?.trim() ?? "";
+    const youtubeId = raw ? extractYouTubeId(raw) : "";
+
+    if (!slug || !topicId) {
+      return { success: false, error: "slug and topicId are required" };
+    }
+    if (raw && !youtubeId) {
+      return { success: false, error: "Could not parse a valid YouTube ID from that input" };
+    }
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === slug);
+    if (idx === -1) return { success: false, error: "Course not found" };
+
+    const course = courses[idx];
+    const weeksDetail = course.weeksDetail ?? [];
+    let found = false;
+    const updatedWeeks = weeksDetail.map((w) => ({
+      ...w,
+      topics: (w.topics ?? []).map((t) => {
+        if (t.id !== topicId) return t;
+        found = true;
+        if (!youtubeId) {
+          const { videoId: _removed, ...rest } = t;
+          return rest;
+        }
+        return { ...t, videoId: youtubeId };
+      }),
+    }));
+
+    if (!found) {
+      return { success: false, error: "Topic not found in curriculum" };
+    }
+
+    courses[idx] = { ...course, weeksDetail: updatedWeeks };
+    await writeCourses(courses);
+    return { success: true, message: "Topic video updated" };
+  } catch (err) {
+    console.error("setTopicVideoId error", err);
+    return {
+      success: false,
+      error: fsErrorMessage(err, "Failed to update topic video"),
+    };
+  }
+}
+
+export async function updateTopicInstructorNotes(
+  formData: FormData,
+): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const slug = (formData.get("slug") as string | null)?.trim();
+    const raw = formData.get("notes") as string | null;
+    if (!slug) {
+      return { success: false, error: "slug is required" };
+    }
+
+    let parsed: Record<string, string> = {};
+    if (raw && raw.trim().length > 0) {
+      try {
+        parsed = JSON.parse(raw) as Record<string, string>;
+      } catch {
+        return { success: false, error: "Invalid notes JSON" };
+      }
+    }
+
+    const cleaned: Record<string, string> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      const key = k.trim();
+      if (!key) continue;
+      const text = typeof v === "string" ? v.trim() : "";
+      if (text.length > 0) cleaned[key] = text;
+    }
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === slug);
+    if (idx === -1) return { success: false, error: "Course not found" };
+
+    const course = courses[idx];
+    courses[idx] = {
+      ...course,
+      topicInstructorNotes:
+        Object.keys(cleaned).length > 0 ? cleaned : undefined,
+    };
+    await writeCourses(courses);
+    return { success: true, message: "Instructor notes saved" };
+  } catch (err) {
+    console.error("updateTopicInstructorNotes error", err);
+    return {
+      success: false,
+      error: fsErrorMessage(err, "Failed to save instructor notes"),
+    };
   }
 }
 

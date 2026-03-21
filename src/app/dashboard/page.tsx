@@ -298,6 +298,16 @@ export default async function DashboardPage() {
                                                   className="h-full w-full"
                                                 />
                                               </div>
+                                              {course.topicInstructorNotes?.[topic.id] ? (
+                                                <div className="mt-3 rounded-lg border border-spark/25 bg-spark/5 p-3">
+                                                  <p className="text-xs font-semibold uppercase tracking-wide text-spark">
+                                                    From your instructor
+                                                  </p>
+                                                  <p className="mt-2 whitespace-pre-wrap text-sm text-text-primary">
+                                                    {course.topicInstructorNotes[topic.id]}
+                                                  </p>
+                                                </div>
+                                              ) : null}
                                               <TopicNotes
                                                 courseSlug={course.slug}
                                                 noteKey={topicNoteKey(topic.id)}
@@ -458,6 +468,16 @@ export default async function DashboardPage() {
                                                     />
                                                   </div>
 
+                                                  {course.topicInstructorNotes?.[topic.id] ? (
+                                                    <div className="mt-3 rounded-lg border border-spark/25 bg-spark/5 p-3">
+                                                      <p className="text-xs font-semibold uppercase tracking-wide text-spark">
+                                                        From your instructor
+                                                      </p>
+                                                      <p className="mt-2 whitespace-pre-wrap text-sm text-text-primary">
+                                                        {course.topicInstructorNotes[topic.id]}
+                                                      </p>
+                                                    </div>
+                                                  ) : null}
                                                   {topicVideos.length > 0 ? (
                                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                                       {topicVideos.map((videoId, idx) => {

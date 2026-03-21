@@ -15,10 +15,30 @@ import {
   createCourseCohort,
   updateCohortLiveVideo,
   deleteCohortLiveVideo,
+  setTopicVideoId,
+  updateTopicInstructorNotes,
 } from "@/app/actions/admin";
 import { Select } from "@/components/ui/select";
 
 type AdminCourseRow = Awaited<ReturnType<typeof adminListCourses>>[number];
+
+function flattenTopicsForNotes(course: AdminCourseRow) {
+  const weeks = ((course as { weeksDetail?: { title?: string; topics?: { id: string; title: string }[] }[] }).weeksDetail ?? []) as {
+    title?: string;
+    topics?: { id: string; title: string }[];
+  }[];
+  const rows: { id: string; title: string; weekLabel: string }[] = [];
+  weeks.forEach((w, wi) => {
+    (w.topics ?? []).forEach((t) => {
+      rows.push({
+        id: t.id,
+        title: t.title,
+        weekLabel: `Week ${wi + 1}${w.title ? `: ${w.title}` : ""}`,
+      });
+    });
+  });
+  return rows;
+}
 
 export function CoursesSection() {
   const [courses, setCourses] = useState<AdminCourseRow[]>([]);
@@ -46,6 +66,12 @@ export function CoursesSection() {
     youtubeId: "",
   });
   const [newCohortId, setNewCohortId] = useState("");
+  const [instructorNotesSlug, setInstructorNotesSlug] = useState<string | null>(
+    null,
+  );
+  const [instructorDrafts, setInstructorDrafts] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [newCourse, setNewCourse] = useState({
     title: "",
     slug: "",
@@ -161,6 +187,15 @@ export function CoursesSection() {
           {actionError}
         </div>
       )}
+      <p className="rounded-lg border border-border/80 bg-bg/40 px-3 py-2 text-[11px] leading-relaxed text-text-secondary">
+        <span className="font-medium text-text-primary">Deploy note: </span>
+        Course and cohort data is saved to{" "}
+        <code className="rounded bg-surface px-1 font-mono text-[10px]">data/courses.json</code>.
+        Many hosts (including Vercel) use a{" "}
+        <strong className="text-text-primary">read-only</strong> filesystem — create cohort, videos,
+        and curriculum edits may fail until course data lives in a database or writable storage.
+        Errors below explain when that happens.
+      </p>
       <div className="space-y-2 rounded-lg border border-primary/20 bg-surface/60 p-3">
         <p className="text-sm font-medium text-text-primary">
           Create new course
@@ -281,14 +316,22 @@ export function CoursesSection() {
                       (((c as any).weeksDetail as any[]) ?? []).map((week, wi) => (
                         <div key={`${c.slug}-video-week-${wi + 1}`} className="rounded border border-primary/15 p-2">
                           <p className="font-semibold text-text-primary">Week {wi + 1}: {week.title}</p>
-                          <ul className="mt-1 space-y-1 text-text-secondary">
+                          <ul className="mt-1 list-none space-y-2 text-text-secondary">
                             {(week.topics ?? []).map((topic: any) => (
-                              <li key={topic.id} className="flex items-center justify-between gap-2">
-                                <span>{topic.title}</span>
-                                <span className="font-mono text-[10px] text-text-secondary">
-                                  {topic.videoId ? topic.videoId : "no-video"}
-                                </span>
-                              </li>
+                              <TopicVideoAdminRow
+                                key={topic.id}
+                                courseSlug={c.slug}
+                                topicId={topic.id}
+                                topicTitle={topic.title}
+                                initialVideoId={topic.videoId}
+                                isBusy={isPending}
+                                onError={setActionError}
+                                onSaved={async () => {
+                                  const refreshed = await adminListCourses();
+                                  setCourses(refreshed);
+                                  router.refresh();
+                                }}
+                              />
                             ))}
                           </ul>
                         </div>
@@ -386,6 +429,10 @@ export function CoursesSection() {
                                   youtubeId: "",
                                 });
                                 router.refresh();
+                              } else {
+                                setActionError(
+                                  result.error ?? "Could not add video.",
+                                );
                               }
                             })
                           }
@@ -569,6 +616,81 @@ export function CoursesSection() {
                     </div>
                   )}
                 </div>
+
+                {instructorNotesSlug === c.slug && (
+                  <div className="mt-2 space-y-2 rounded-md border border-growth/30 bg-surface/60 p-2">
+                    <p className="text-[11px] font-medium text-text-primary">
+                      Instructor notes (visible to all learners)
+                    </p>
+                    <p className="text-[10px] text-text-secondary">
+                      Shown on the learner dashboard above &quot;Your notes&quot; for each topic.
+                    </p>
+                    {flattenTopicsForNotes(c).length === 0 ? (
+                      <p className="text-[11px] text-text-secondary">
+                        Add topics in <span className="font-medium">Curriculum</span> first, then save
+                        curriculum.
+                      </p>
+                    ) : (
+                      <>
+                        {flattenTopicsForNotes(c).map((row) => (
+                          <div
+                            key={row.id}
+                            className="space-y-1 rounded border border-border/60 p-2"
+                          >
+                            <p className="text-[10px] text-text-secondary">{row.weekLabel}</p>
+                            <p className="text-[11px] font-medium text-text-primary">{row.title}</p>
+                            <textarea
+                              value={instructorDrafts[c.slug]?.[row.id] ?? ""}
+                              onChange={(e) =>
+                                setInstructorDrafts((prev) => ({
+                                  ...prev,
+                                  [c.slug]: {
+                                    ...(prev[c.slug] ?? {}),
+                                    [row.id]: e.target.value,
+                                  },
+                                }))
+                              }
+                              rows={3}
+                              className="w-full resize-y rounded-md border border-primary/25 bg-surface px-2 py-1 text-[11px] text-text-primary outline-none focus:border-spark"
+                              placeholder='Optional — e.g. "Focus on the checklist at 12:30"'
+                            />
+                          </div>
+                        ))}
+                        <div className="flex justify-end pt-1">
+                          <Button
+                            type="button"
+                            size="xs"
+                            className="bg-growth text-bg hover:bg-growth/90"
+                            disabled={isPending}
+                            onClick={() =>
+                              startTransition(async () => {
+                                setActionError(null);
+                                const fd = new FormData();
+                                fd.append("slug", c.slug);
+                                fd.append(
+                                  "notes",
+                                  JSON.stringify(instructorDrafts[c.slug] ?? {}),
+                                );
+                                const result = await updateTopicInstructorNotes(fd);
+                                if (result.success) {
+                                  const refreshed = await adminListCourses();
+                                  setCourses(refreshed);
+                                  router.refresh();
+                                } else {
+                                  setActionError(
+                                    result.error ?? "Could not save instructor notes.",
+                                  );
+                                }
+                              })
+                            }
+                          >
+                            Save instructor notes
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -632,6 +754,36 @@ export function CoursesSection() {
                   }
                 >
                   {curriculumSlug === c.slug ? "Close Curriculum" : "Curriculum"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-primary/60 text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    if (instructorNotesSlug === c.slug) {
+                      setInstructorNotesSlug(null);
+                    } else {
+                      const existing =
+                        (
+                          c as {
+                            topicInstructorNotes?: Record<string, string>;
+                          }
+                        ).topicInstructorNotes ?? {};
+                      const draft: Record<string, string> = {};
+                      for (const row of flattenTopicsForNotes(c)) {
+                        draft[row.id] = existing[row.id] ?? "";
+                      }
+                      setInstructorDrafts((prev) => ({
+                        ...prev,
+                        [c.slug]: draft,
+                      }));
+                      setInstructorNotesSlug(c.slug);
+                    }
+                  }}
+                >
+                  {instructorNotesSlug === c.slug
+                    ? "Close instructor notes"
+                    : "Instructor notes"}
                 </Button>
                 <Button
                   size="sm"
@@ -779,6 +931,11 @@ export function CoursesSection() {
                                                   const refreshed = await adminListCourses();
                                                   setCourses(refreshed);
                                                   router.refresh();
+                                                } else {
+                                                  setActionError(
+                                                    result.error ??
+                                                      "Could not update cohort video.",
+                                                  );
                                                 }
                                               })
                                             }
@@ -802,6 +959,11 @@ export function CoursesSection() {
                                                   const refreshed = await adminListCourses();
                                                   setCourses(refreshed);
                                                   router.refresh();
+                                                } else {
+                                                  setActionError(
+                                                    result.error ??
+                                                      "Could not delete cohort video.",
+                                                  );
                                                 }
                                               })
                                             }
@@ -848,6 +1010,10 @@ export function CoursesSection() {
                               }));
                               setNewCohortId("");
                               router.refresh();
+                            } else {
+                              setActionError(
+                                result.error ?? "Could not create cohort.",
+                              );
                             }
                           })
                         }
@@ -882,7 +1048,12 @@ export function CoursesSection() {
                               youtubeId: "",
                             });
                             setLiveVideoSlug(null);
+                            void adminListCourses().then(setCourses);
                             router.refresh();
+                          } else {
+                            setActionError(
+                              result.error ?? "Could not save live video.",
+                            );
                           }
                         })
                       }
@@ -898,6 +1069,86 @@ export function CoursesSection() {
         )}
       </div>
     </div>
+  );
+}
+
+function TopicVideoAdminRow({
+  courseSlug,
+  topicId,
+  topicTitle,
+  initialVideoId,
+  isBusy,
+  onError,
+  onSaved,
+}: {
+  courseSlug: string;
+  topicId: string;
+  topicTitle: string;
+  initialVideoId?: string;
+  isBusy: boolean;
+  onError: (msg: string | null) => void;
+  onSaved: () => Promise<void>;
+}) {
+  const [val, setVal] = useState(initialVideoId ?? "");
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setVal(initialVideoId ?? "");
+  }, [initialVideoId]);
+
+  const run = (clear: boolean) => {
+    onError(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.append("slug", courseSlug);
+      fd.append("topicId", topicId);
+      fd.append("youtubeId", clear ? "" : val.trim());
+      const r = await setTopicVideoId(fd);
+      if (!r.success) {
+        onError(r.error ?? "Could not update topic video");
+        return;
+      }
+      await onSaved();
+    });
+  };
+
+  return (
+    <li className="flex flex-col gap-2 rounded border border-primary/10 p-2">
+      <span className="text-sm text-text-primary">{topicTitle}</span>
+      <Input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        className="font-mono text-[10px] text-text-primary"
+        placeholder="YouTube URL or 11-char ID"
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="xs"
+          className="bg-spark text-bg hover:bg-spark/90"
+          disabled={isBusy || pending}
+          onClick={() => run(false)}
+        >
+          Save video
+        </Button>
+        <Button
+          type="button"
+          size="xs"
+          variant="outline"
+          className="border-secondary/60 text-secondary hover:bg-secondary/10"
+          disabled={isBusy || pending || !initialVideoId}
+          onClick={() => run(true)}
+        >
+          Clear video
+        </Button>
+      </div>
+      <p className="text-[10px] text-text-secondary">
+        Stored ID:{" "}
+        <span className="font-mono text-text-primary">
+          {initialVideoId || "—"}
+        </span>
+      </p>
+    </li>
   );
 }
 

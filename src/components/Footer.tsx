@@ -1,30 +1,9 @@
 import Link from "next/link";
 import { FooterNewsletterForm } from "./FooterNewsletterForm";
 
-function buildLabel() {
-  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
-  const short = sha ? sha.slice(0, 7) : null;
-  const env = process.env.VERCEL_ENV;
-  if (short) {
-    return `Build ${short}${env ? ` · ${env}` : ""}`;
-  }
-  return "Build local (no VERCEL_GIT_COMMIT_SHA)";
-}
-
 export function Footer() {
-  const buildLine = buildLabel();
-
   return (
     <footer className="mt-16 border-t border-border bg-surface/60">
-      <div className="border-b border-spark/30 bg-spark/15 px-4 py-2 text-center">
-        <p className="text-xs font-semibold tracking-wide text-text-primary">
-          {buildLine} — check{" "}
-          <Link href="/api/health" className="text-primary underline underline-offset-2 hover:text-spark">
-            /api/health
-          </Link>{" "}
-          for JSON
-        </p>
-      </div>
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
         <div className="grid gap-8 md:grid-cols-3">
           <div className="space-y-3">
@@ -128,12 +107,9 @@ export function Footer() {
           <p>
             © {new Date().getFullYear()} UltimaSpark Academy. All rights reserved.
           </p>
-          <div className="flex flex-col items-end gap-1 sm:text-right">
-            <p className="text-text-secondary">
-              Warm minimal • soft spark accents
-            </p>
-            <p className="font-mono text-xs font-bold text-spark">{buildLine}</p>
-          </div>
+          <p className="text-text-secondary sm:text-right">
+            Warm minimal • soft spark accents
+          </p>
         </div>
       </div>
     </footer>
