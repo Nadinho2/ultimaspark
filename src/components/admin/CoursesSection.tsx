@@ -189,12 +189,12 @@ export function CoursesSection() {
       )}
       <p className="rounded-lg border border-border/80 bg-bg/40 px-3 py-2 text-[11px] leading-relaxed text-text-secondary">
         <span className="font-medium text-text-primary">Deploy note: </span>
-        Course and cohort data is saved to{" "}
-        <code className="rounded bg-surface px-1 font-mono text-[10px]">data/courses.json</code>.
-        Many hosts (including Vercel) use a{" "}
-        <strong className="text-text-primary">read-only</strong> filesystem — create cohort, videos,
-        and curriculum edits may fail until course data lives in a database or writable storage.
-        Errors below explain when that happens.
+        Without{" "}
+        <code className="rounded bg-surface px-1 font-mono text-[10px]">SUPABASE_SERVICE_ROLE_KEY</code>,
+        courses are read from{" "}
+        <code className="rounded bg-surface px-1 font-mono text-[10px]">data/courses.json</code>{" "}
+        (read-only on Vercel). With Supabase configured, saves go to the database. See{" "}
+        <code className="rounded bg-surface px-1 font-mono text-[10px]">docs/supabase-courses.md</code>.
       </p>
       <div className="space-y-2 rounded-lg border border-primary/20 bg-surface/60 p-3">
         <p className="text-sm font-medium text-text-primary">

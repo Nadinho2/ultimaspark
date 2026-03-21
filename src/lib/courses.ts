@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { readCourses as readCoursesFromStore } from "@/lib/course-store";
 
 export type CourseTopic = {
   id: string;
@@ -38,15 +37,9 @@ export type Course = {
   videos?: CourseVideo[];
 };
 
-function coursesFilePath() {
-  return path.join(process.cwd(), "data", "courses.json");
-}
-
 export async function getCourses(): Promise<Course[]> {
   try {
-    const file = coursesFilePath();
-    const raw = await fs.readFile(file, "utf8");
-    return JSON.parse(raw) as Course[];
+    return await readCoursesFromStore();
   } catch {
     return [];
   }

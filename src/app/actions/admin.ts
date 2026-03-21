@@ -1,13 +1,16 @@
 "use server";
 
-import { promises as fs } from "fs";
-import path from "path";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import NewVideoAdded from "@/emails/NewVideoAdded";
 import * as React from "react";
-import { extractYouTubeId } from "@/lib/courses";
+import { extractYouTubeId, type Course, type CourseWeek } from "@/lib/courses";
+import {
+  readCourses,
+  writeCourses,
+  persistErrorMessage,
+} from "@/lib/course-store";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -15,35 +18,6 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 type AdminResult =
   | { success: true; message?: string }
   | { success: false; error: string };
-
-type CourseTopic = {
-  id: string;
-  title: string;
-  videoId?: string;
-  subtopics?: string[];
-  bullets?: string[];
-};
-
-type CourseWeek = {
-  title: string;
-  summary?: string;
-  topics: CourseTopic[];
-};
-
-type Course = {
-  slug: string;
-  title: string;
-  description: string;
-  weeks: number;
-  cohorts?: string[];
-  cohortLiveVideos?: Record<
-    string,
-    Record<string, string[] | Record<string, string[]>>
-  >;
-  weeksDetail?: CourseWeek[];
-  topicInstructorNotes?: Record<string, string>;
-  videos?: { week: number; title: string; youtubeId: string }[];
-};
 
 function ensureAdminRole(role: unknown): role is "admin" {
   if (!role) return false;
@@ -64,33 +38,6 @@ async function requireAdmin() {
     throw new Error("Not authorized");
   }
   return { client };
-}
-
-function coursesFilePath() {
-  return path.join(process.cwd(), "data", "courses.json");
-}
-
-async function readCourses(): Promise<Course[]> {
-  const file = coursesFilePath();
-  const raw = await fs.readFile(file, "utf8");
-  return JSON.parse(raw) as Course[];
-}
-
-async function writeCourses(courses: Course[]) {
-  const file = coursesFilePath();
-  await fs.writeFile(file, JSON.stringify(courses, null, 2), "utf8");
-}
-
-/** User-facing message when JSON file writes fail (common on serverless / read-only FS). */
-function fsErrorMessage(err: unknown, fallback: string): string {
-  if (err instanceof Error) {
-    const m = err.message;
-    if (/read-only|EROFS|EPERM|EACCES|ENOTSUP/i.test(m)) {
-      return "Cannot save courses on this host (serverless deploys are often read-only). Run admin locally or move course data to a database.";
-    }
-    return m;
-  }
-  return fallback;
 }
 
 export async function adminListUsers() {
@@ -321,7 +268,7 @@ export async function createCourse(formData: FormData): Promise<AdminResult> {
     return { success: true, message: "Course created" };
   } catch (err) {
     console.error("createCourse error", err);
-    return { success: false, error: fsErrorMessage(err, "Failed to create course") };
+    return { success: false, error: persistErrorMessage(err, "Failed to create course") };
   }
 }
 
@@ -366,7 +313,7 @@ export async function updateCourse(formData: FormData): Promise<AdminResult> {
     return { success: true, message: "Course updated" };
   } catch (err) {
     console.error("updateCourse error", err);
-    return { success: false, error: fsErrorMessage(err, "Failed to update course") };
+    return { success: false, error: persistErrorMessage(err, "Failed to update course") };
   }
 }
 
@@ -409,7 +356,7 @@ export async function deleteCourse(slug: string): Promise<AdminResult> {
     return { success: true, message: "Course deleted" };
   } catch (err) {
     console.error("deleteCourse error", err);
-    return { success: false, error: fsErrorMessage(err, "Failed to delete course") };
+    return { success: false, error: persistErrorMessage(err, "Failed to delete course") };
   }
 }
 
@@ -557,7 +504,7 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
     return { success: true, message: "Video added" };
   } catch (err) {
     console.error("addCourseVideo error", err);
-    return { success: false, error: fsErrorMessage(err, "Failed to add video") };
+    return { success: false, error: persistErrorMessage(err, "Failed to add video") };
   }
 }
 
@@ -625,7 +572,7 @@ export async function updateCourseCurriculum(
     return { success: true, message: "Curriculum updated" };
   } catch (err) {
     console.error("updateCourseCurriculum error", err);
-    return { success: false, error: fsErrorMessage(err, "Failed to update curriculum") };
+    return { success: false, error: persistErrorMessage(err, "Failed to update curriculum") };
   }
 }
 
@@ -731,7 +678,7 @@ export async function addLiveSessionVideo(formData: FormData): Promise<AdminResu
     console.error("addLiveSessionVideo error", err);
     return {
       success: false,
-      error: fsErrorMessage(err, "Failed to add live session video"),
+      error: persistErrorMessage(err, "Failed to add live session video"),
     };
   }
 }
@@ -770,7 +717,7 @@ export async function createCourseCohort(formData: FormData): Promise<AdminResul
     console.error("createCourseCohort error", err);
     return {
       success: false,
-      error: fsErrorMessage(err, "Failed to create cohort"),
+      error: persistErrorMessage(err, "Failed to create cohort"),
     };
   }
 }
@@ -825,7 +772,7 @@ export async function updateCohortLiveVideo(formData: FormData): Promise<AdminRe
     console.error("updateCohortLiveVideo error", err);
     return {
       success: false,
-      error: fsErrorMessage(err, "Failed to update cohort video"),
+      error: persistErrorMessage(err, "Failed to update cohort video"),
     };
   }
 }
@@ -873,7 +820,7 @@ export async function deleteCohortLiveVideo(formData: FormData): Promise<AdminRe
     console.error("deleteCohortLiveVideo error", err);
     return {
       success: false,
-      error: fsErrorMessage(err, "Failed to delete cohort video"),
+      error: persistErrorMessage(err, "Failed to delete cohort video"),
     };
   }
 }
@@ -924,7 +871,7 @@ export async function setTopicVideoId(formData: FormData): Promise<AdminResult> 
     console.error("setTopicVideoId error", err);
     return {
       success: false,
-      error: fsErrorMessage(err, "Failed to update topic video"),
+      error: persistErrorMessage(err, "Failed to update topic video"),
     };
   }
 }
@@ -973,7 +920,7 @@ export async function updateTopicInstructorNotes(
     console.error("updateTopicInstructorNotes error", err);
     return {
       success: false,
-      error: fsErrorMessage(err, "Failed to save instructor notes"),
+      error: persistErrorMessage(err, "Failed to save instructor notes"),
     };
   }
 }
