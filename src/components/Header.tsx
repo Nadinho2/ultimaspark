@@ -43,18 +43,6 @@ export function Header() {
           <Link href="/courses" className="transition-colors hover:text-spark">
             Courses
           </Link>
-          <Link
-            href="/ai-automation"
-            className="transition-colors hover:text-spark"
-          >
-            AI Automation
-          </Link>
-          <Link
-            href="/vibe-coding"
-            className="transition-colors hover:text-spark"
-          >
-            Vibe Coding
-          </Link>
           <Link href="/about" className="transition-colors hover:text-spark">
             About
           </Link>
@@ -139,20 +127,6 @@ export function Header() {
               onClick={() => setOpen(false)}
             >
               Courses
-            </Link>
-            <Link
-              href="/ai-automation"
-              className="py-1 transition-colors hover:text-spark"
-              onClick={() => setOpen(false)}
-            >
-              AI Automation
-            </Link>
-            <Link
-              href="/vibe-coding"
-              className="py-1 transition-colors hover:text-spark"
-              onClick={() => setOpen(false)}
-            >
-              Vibe Coding
             </Link>
             <Link
               href="/about"

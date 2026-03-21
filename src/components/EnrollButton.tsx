@@ -17,6 +17,10 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [enrollmentType, setEnrollmentType] = useState<"subscription" | "cohort">(
+    "subscription",
+  );
+  const [preferredCohort, setPreferredCohort] = useState("");
 
   const enrolled =
     (user?.publicMetadata?.enrolledCourses as string[] | undefined) ?? [];
@@ -24,7 +28,13 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
 
   const pending =
     (user?.publicMetadata?.pendingEnrollments as
-      | { courseSlug: string; requestedAt: string; message?: string }[]
+      | {
+          courseSlug: string;
+          requestedAt: string;
+          message?: string;
+          enrollmentType?: "subscription" | "cohort";
+          preferredCohort?: string;
+        }[]
       | undefined) ?? [];
   const isPendingApproval = pending.some((p) => p.courseSlug === courseSlug);
 
@@ -37,6 +47,10 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
     startTransition(async () => {
       const formData = new FormData();
       formData.append("courseSlug", courseSlug);
+      formData.append("enrollmentType", enrollmentType);
+      if (preferredCohort.trim()) {
+        formData.append("preferredCohort", preferredCohort.trim());
+      }
 
       const result = await requestEnrollment(formData);
 
@@ -62,6 +76,37 @@ export function EnrollButton({ courseSlug, className }: EnrollButtonProps) {
 
   return (
     <div className="space-y-2">
+      {!isEnrolled && !isPendingApproval && (
+        <div className="max-w-xs space-y-1">
+          <label className="block text-xs font-medium text-text-secondary">
+            Enrollment type
+          </label>
+          <select
+            value={enrollmentType}
+            onChange={(e) =>
+              setEnrollmentType(
+                e.target.value === "cohort" ? "cohort" : "subscription",
+              )
+            }
+            className="h-9 w-full rounded-md border border-border bg-surface px-2 text-xs text-text-primary outline-none focus:border-spark"
+          >
+            <option value="subscription">
+              Subscription (full pre-recorded library)
+            </option>
+            <option value="cohort">
+              Cohort (live session recordings only)
+            </option>
+          </select>
+          {enrollmentType === "cohort" && (
+            <input
+              value={preferredCohort}
+              onChange={(e) => setPreferredCohort(e.target.value)}
+              placeholder="Preferred cohort (optional, e.g. ai-automation-apr-2026)"
+              className="mt-2 h-9 w-full rounded-md border border-border bg-surface px-2 text-xs text-text-primary outline-none focus:border-spark"
+            />
+          )}
+        </div>
+      )}
       <button
         type="button"
         onClick={handleClick}

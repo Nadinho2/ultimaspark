@@ -10,9 +10,13 @@ import {
   updateCourse,
   deleteCourse,
   addCourseVideo,
-  removeCourseVideo,
   updateCourseCurriculum,
+  addLiveSessionVideo,
+  createCourseCohort,
+  updateCohortLiveVideo,
+  deleteCohortLiveVideo,
 } from "@/app/actions/admin";
+import { Select } from "@/components/ui/select";
 
 type AdminCourseRow = Awaited<ReturnType<typeof adminListCourses>>[number];
 
@@ -23,17 +27,26 @@ export function CoursesSection() {
   const [formOpenSlug, setFormOpenSlug] = useState<string | null>(null);
   const [videoFormSlug, setVideoFormSlug] = useState<string | null>(null);
   const [curriculumSlug, setCurriculumSlug] = useState<string | null>(null);
+  const [liveVideoSlug, setLiveVideoSlug] = useState<string | null>(null);
   const [newVideo, setNewVideo] = useState({
     week: 1,
-    title: "",
+    topicId: "",
     youtubeId: "",
   });
+  const [newLiveVideo, setNewLiveVideo] = useState({
+    cohortId: "",
+    week: 1,
+    topicId: "",
+    youtubeId: "",
+  });
+  const [newCohortId, setNewCohortId] = useState("");
   const [newCourse, setNewCourse] = useState({
     title: "",
     slug: "",
     description: "",
     weeks: 6,
   });
+  const [editLiveVideos, setEditLiveVideos] = useState<Record<string, string>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -116,7 +129,7 @@ export function CoursesSection() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden">
       <div className="space-y-2 rounded-lg border border-primary/20 bg-surface/60 p-3">
         <p className="text-sm font-medium text-text-primary">
           Create new course
@@ -182,15 +195,15 @@ export function CoursesSection() {
           courses.map((c) => (
             <div
               key={c.slug}
-              className="flex flex-col gap-2 rounded-lg border border-primary/15 bg-surface/60 p-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex min-w-0 flex-col gap-2 rounded-lg border border-primary/15 bg-surface/60 p-3"
             >
-              <div className="flex-1 space-y-1">
+              <div className="min-w-0 flex-1 space-y-1">
                 <div>
                   <p className="text-sm font-medium text-text-primary">
                     {c.title}
                   </p>
-                  <p className="text-[11px] text-text-secondary">
-                    slug: <span className="font-mono">{c.slug}</span> • weeks:{" "}
+                  <p className="text-[11px] text-text-secondary break-words">
+                    slug: <span className="font-mono break-all">{c.slug}</span> • weeks:{" "}
                     {c.weeks} • enrolled: {c.enrolledCount}
                   </p>
                 </div>
@@ -226,92 +239,71 @@ export function CoursesSection() {
                     />
                   </div>
                 )}
-                {/* Videos management */}
+                {/* Videos management (topic-level) */}
                 <div className="mt-2 space-y-1 rounded-md border border-primary/20 bg-surface/60 p-2">
                   <p className="text-[11px] font-medium text-text-primary">
-                    Videos
+                    Topic Videos
                   </p>
-                  {(c as any).videos && (c as any).videos.length > 0 ? (
-                    <ul className="space-y-1">
-                      {(c as any).videos.map(
-                        (v: {
-                          week: number;
-                          title: string;
-                          youtubeId: string;
-                        }) => (
-                          <li
-                            key={v.youtubeId}
-                            className="flex items-center justify-between text-[11px] text-text-secondary"
-                          >
-                            <span>
-                              Week {v.week}: {v.title}{" "}
-                              <span className="font-mono text-[10px]">
-                                ({v.youtubeId})
-                              </span>
-                            </span>
-                            <Button
-                              size="xs"
-                              variant="destructive"
-                              disabled={isPending}
-                              onClick={() =>
-                                startTransition(async () => {
-                                  const result = await removeCourseVideo(
-                                    c.slug,
-                                    v.youtubeId,
-                                  );
-                                  if (result.success) {
-                                    const refreshed =
-                                      await adminListCourses();
-                                    setCourses(refreshed);
-                                    setVideoFormSlug(null);
-                                    setNewVideo({
-                                      week: 1,
-                                      title: "",
-                                      youtubeId: "",
-                                    });
-                                    router.refresh();
-                                  }
-                                })
-                              }
-                            >
-                              Remove
-                            </Button>
-                          </li>
-                        ),
-                      )}
-                    </ul>
-                  ) : (
-                    <p className="text-[11px] text-text-secondary">
-                      No videos configured.
-                    </p>
-                  )}
+                  <div className="space-y-1 text-[11px]">
+                    {(((c as any).weeksDetail as any[]) ?? []).length > 0 ? (
+                      (((c as any).weeksDetail as any[]) ?? []).map((week, wi) => (
+                        <div key={`${c.slug}-video-week-${wi + 1}`} className="rounded border border-primary/15 p-2">
+                          <p className="font-semibold text-text-primary">Week {wi + 1}: {week.title}</p>
+                          <ul className="mt-1 space-y-1 text-text-secondary">
+                            {(week.topics ?? []).map((topic: any) => (
+                              <li key={topic.id} className="flex items-center justify-between gap-2">
+                                <span>{topic.title}</span>
+                                <span className="font-mono text-[10px] text-text-secondary">
+                                  {topic.videoId ? topic.videoId : "no-video"}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-text-secondary">No week/topics configured yet.</p>
+                    )}
+                  </div>
                   {videoFormSlug === c.slug && (
-                    <div className="mt-2 grid gap-1 sm:grid-cols-[80px_1fr]">
-                      <Input
-                        type="number"
-                        min={1}
-                        max={c.weeks}
+                    <div className="mt-2 grid gap-1 sm:grid-cols-3">
+                      <select
                         value={newVideo.week}
                         onChange={(e) =>
                           setNewVideo((prev) => ({
                             ...prev,
                             week: Number(e.target.value) || 1,
+                            topicId: "",
                           }))
                         }
-                        className="bg-surface text-[11px] text-text-primary"
-                        placeholder="Week"
-                      />
-                      <Input
-                        value={newVideo.title}
+                        className="h-9 rounded-md border border-primary/25 bg-surface px-2 text-[11px] text-text-primary outline-none focus:border-spark"
+                      >
+                        {Array.from({ length: c.weeks }).map((_, idx) => (
+                          <option key={`${c.slug}-week-option-${idx + 1}`} value={idx + 1}>
+                            Week {idx + 1}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={newVideo.topicId}
                         onChange={(e) =>
                           setNewVideo((prev) => ({
                             ...prev,
-                            title: e.target.value,
+                            topicId: e.target.value,
                           }))
                         }
-                        className="bg-surface text-[11px] text-text-primary"
-                        placeholder="Video title (optional)"
-                      />
+                        className="h-9 rounded-md border border-primary/25 bg-surface px-2 text-[11px] text-text-primary outline-none focus:border-spark"
+                      >
+                        <option value="">Select topic</option>
+                        {(
+                          (((c as any).weeksDetail as any[])?.[newVideo.week - 1]?.topics as any[]) ??
+                          []
+                        ).map((topic: any) => (
+                          <option key={topic.id} value={topic.id}>
+                            {topic.title}
+                          </option>
+                        ))}
+                      </select>
                       <Input
                         value={newVideo.youtubeId}
                         onChange={(e) =>
@@ -320,10 +312,10 @@ export function CoursesSection() {
                             youtubeId: e.target.value,
                           }))
                         }
-                        className="sm:col-span-2 bg-surface text-[11px] text-text-primary"
-                        placeholder="YouTube ID (e.g. dQw4w9WgXcQ)"
+                        className="bg-surface text-[11px] text-text-primary"
+                        placeholder="YouTube URL or ID"
                       />
-                      <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
+                      <div className="sm:col-span-3 flex justify-end gap-2 pt-1">
                         <Button
                           size="xs"
                           variant="outline"
@@ -332,7 +324,7 @@ export function CoursesSection() {
                             setVideoFormSlug(null);
                             setNewVideo({
                               week: 1,
-                              title: "",
+                              topicId: "",
                               youtubeId: "",
                             });
                           }}
@@ -342,14 +334,13 @@ export function CoursesSection() {
                         <Button
                           size="xs"
                           className="bg-spark text-bg hover:bg-spark/90"
-                          disabled={isPending || !newVideo.youtubeId}
+                          disabled={isPending || !newVideo.youtubeId || !newVideo.topicId}
                           onClick={() =>
                             startTransition(async () => {
                               const fd = new FormData();
                               fd.append("slug", c.slug);
                               fd.append("week", String(newVideo.week));
-                              if (newVideo.title)
-                                fd.append("title", newVideo.title);
+                              fd.append("topicId", newVideo.topicId);
                               fd.append("youtubeId", newVideo.youtubeId);
                               const result = await addCourseVideo(fd);
                               if (result.success) {
@@ -359,7 +350,7 @@ export function CoursesSection() {
                                 setVideoFormSlug(null);
                                 setNewVideo({
                                   week: 1,
-                                  title: "",
+                                  topicId: "",
                                   youtubeId: "",
                                 });
                                 router.refresh();
@@ -367,7 +358,7 @@ export function CoursesSection() {
                             })
                           }
                         >
-                          Add Video
+                          Add Video to Topic
                         </Button>
                       </div>
                     </div>
@@ -488,9 +479,14 @@ export function CoursesSection() {
                                           summary: "",
                                           topics: [],
                                         };
+                                      const existingTopics = (existingWeek.topics ?? []) as any[];
                                       const topics = lines.map((title, idx) => ({
-                                        id: `${row.slug}-week-${index + 1}-topic-${idx + 1}`,
+                                        id:
+                                          existingTopics[idx]?.id ??
+                                          `${row.slug}-week-${index + 1}-topic-${idx + 1}`,
                                         title,
+                                        videoId: existingTopics[idx]?.videoId ?? "",
+                                        subtopics: existingTopics[idx]?.subtopics ?? [],
                                       }));
                                       copy[index] = {
                                         ...existingWeek,
@@ -536,7 +532,7 @@ export function CoursesSection() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 self-end sm:self-auto">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -590,7 +586,266 @@ export function CoursesSection() {
                 >
                   {curriculumSlug === c.slug ? "Close Curriculum" : "Curriculum"}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-spark/60 text-spark hover:bg-spark/10"
+                  onClick={() =>
+                    setLiveVideoSlug((prev) =>
+                      prev === c.slug ? null : c.slug,
+                    )
+                  }
+                >
+                  {liveVideoSlug === c.slug ? "Close Live Videos" : "Add Live Session Video"}
+                </Button>
               </div>
+              {liveVideoSlug === c.slug && (
+                <div className="mt-3 min-w-0 rounded-md border border-spark/30 bg-surface/70 p-3">
+                  <p className="text-[11px] font-medium text-text-primary">
+                    Add live session recording for cohort learners
+                  </p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    <Select
+                      value={newLiveVideo.cohortId}
+                      onChange={(e) =>
+                        setNewLiveVideo((prev) => ({
+                          ...prev,
+                          cohortId: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select cohort</option>
+                      {((c as any).cohorts ?? []).map((cohortId: string) => (
+                        <option key={`${c.slug}-cohort-${cohortId}`} value={cohortId}>
+                          {cohortId}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select
+                      value={newLiveVideo.week}
+                      onChange={(e) =>
+                        setNewLiveVideo((prev) => ({
+                          ...prev,
+                          week: Number(e.target.value) || 1,
+                          topicId: "",
+                        }))
+                      }
+                    >
+                      {Array.from({ length: c.weeks }).map((_, idx) => (
+                        <option key={`${c.slug}-live-week-${idx + 1}`} value={idx + 1}>
+                          Week {idx + 1}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select
+                      value={newLiveVideo.topicId}
+                      onChange={(e) =>
+                        setNewLiveVideo((prev) => ({
+                          ...prev,
+                          topicId: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select topic</option>
+                      {(
+                        (((c as any).weeksDetail as any[])?.[newLiveVideo.week - 1]?.topics as any[]) ??
+                        []
+                      ).map((topic: any) => (
+                        <option key={`${c.slug}-live-topic-${topic.id}`} value={topic.id}>
+                          {topic.title}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input
+                      value={newLiveVideo.youtubeId}
+                      onChange={(e) =>
+                        setNewLiveVideo((prev) => ({
+                          ...prev,
+                          youtubeId: e.target.value,
+                        }))
+                      }
+                      className="bg-surface text-[11px] text-text-primary"
+                      placeholder="YouTube URL or ID"
+                    />
+                  </div>
+                  {newLiveVideo.cohortId && (
+                    <div className="mt-3 space-y-2 rounded-md border border-border/70 bg-surface/60 p-3">
+                      <p className="text-[11px] font-semibold text-text-primary">
+                        Manage uploaded videos ({newLiveVideo.cohortId})
+                      </p>
+                      {(() => {
+                        const cohortVideos =
+                          ((((c as any).cohortLiveVideos ?? {})[
+                            newLiveVideo.cohortId
+                          ] as Record<string, any> | undefined) ?? {});
+                        const weekEntries = Object.entries(cohortVideos);
+                        if (weekEntries.length === 0) {
+                          return (
+                        <p className="text-[11px] text-text-secondary">
+                          No videos uploaded for this cohort yet.
+                        </p>
+                          );
+                        }
+                        return weekEntries.map(([weekKey, topicBucket]) => {
+                          const normalizedTopicBucket = Array.isArray(topicBucket)
+                            ? { __general__: topicBucket }
+                            : (topicBucket ?? {});
+                          return (
+                            <div key={`${c.slug}-${newLiveVideo.cohortId}-${weekKey}`} className="space-y-2 rounded border border-border/70 p-2">
+                              <p className="text-[11px] font-medium text-text-primary">{weekKey}</p>
+                              {Object.entries(normalizedTopicBucket).map(([topicId, videos]) => (
+                                <div key={`${weekKey}-${topicId}`} className="rounded border border-border/60 p-2">
+                                  <p className="text-[11px] text-text-secondary">
+                                    Topic: <span className="font-mono text-text-primary">{topicId}</span>
+                                  </p>
+                                  <div className="mt-1 space-y-1">
+                                    {(videos as string[]).map((videoId, idx) => {
+                                      const editKey = `${c.slug}|${newLiveVideo.cohortId}|${weekKey}|${topicId}|${videoId}|${idx}`;
+                                      const editValue = editLiveVideos[editKey] ?? videoId;
+                                      return (
+                                        <div key={editKey} className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
+                                          <Input
+                                            value={editValue}
+                                            onChange={(e) =>
+                                              setEditLiveVideos((prev) => ({
+                                                ...prev,
+                                                [editKey]: e.target.value,
+                                              }))
+                                            }
+                                            className="h-8 bg-surface text-[11px] text-text-primary"
+                                          />
+                                          <Button
+                                            size="xs"
+                                            variant="outline"
+                                            disabled={isPending || !editValue.trim()}
+                                            onClick={() =>
+                                              startTransition(async () => {
+                                                const fd = new FormData();
+                                                fd.append("courseSlug", c.slug);
+                                                fd.append("cohortId", newLiveVideo.cohortId);
+                                                fd.append("weekKey", weekKey);
+                                                fd.append("topicId", topicId);
+                                                fd.append("oldYoutubeId", videoId);
+                                                fd.append("newYoutubeId", editValue.trim());
+                                                const result = await updateCohortLiveVideo(fd);
+                                                if (result.success) {
+                                                  const refreshed = await adminListCourses();
+                                                  setCourses(refreshed);
+                                                  router.refresh();
+                                                }
+                                              })
+                                            }
+                                          >
+                                            Save
+                                          </Button>
+                                          <Button
+                                            size="xs"
+                                            variant="destructive"
+                                            disabled={isPending}
+                                            onClick={() =>
+                                              startTransition(async () => {
+                                                const fd = new FormData();
+                                                fd.append("courseSlug", c.slug);
+                                                fd.append("cohortId", newLiveVideo.cohortId);
+                                                fd.append("weekKey", weekKey);
+                                                fd.append("topicId", topicId);
+                                                fd.append("youtubeId", videoId);
+                                                const result = await deleteCohortLiveVideo(fd);
+                                                if (result.success) {
+                                                  const refreshed = await adminListCourses();
+                                                  setCourses(refreshed);
+                                                  router.refresh();
+                                                }
+                                              })
+                                            }
+                                          >
+                                            Delete
+                                          </Button>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
+                  <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+                      <Input
+                        value={newCohortId}
+                        onChange={(e) => setNewCohortId(e.target.value)}
+                        placeholder="Create cohort id (e.g. ai-automation-apr-2026)"
+                        className="min-w-0 bg-surface text-[11px] text-text-primary"
+                      />
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        className="border-spark/50 text-spark hover:bg-spark/10"
+                        disabled={isPending || !newCohortId.trim()}
+                        onClick={() =>
+                          startTransition(async () => {
+                            const fd = new FormData();
+                            fd.append("courseSlug", c.slug);
+                            fd.append("cohortId", newCohortId.trim());
+                            const result = await createCourseCohort(fd);
+                            if (result.success) {
+                              const refreshed = await adminListCourses();
+                              setCourses(refreshed);
+                              setNewLiveVideo((prev) => ({
+                                ...prev,
+                                cohortId: newCohortId.trim(),
+                              }));
+                              setNewCohortId("");
+                              router.refresh();
+                            }
+                          })
+                        }
+                      >
+                        Create Cohort
+                      </Button>
+                    </div>
+                    <div className="flex justify-end">
+                    <Button
+                      size="xs"
+                      className="bg-spark text-bg hover:bg-spark/90"
+                      disabled={
+                        isPending ||
+                        !newLiveVideo.youtubeId ||
+                        !newLiveVideo.cohortId ||
+                        !newLiveVideo.topicId
+                      }
+                      onClick={() =>
+                        startTransition(async () => {
+                          const fd = new FormData();
+                          fd.append("courseSlug", c.slug);
+                          fd.append("cohortId", newLiveVideo.cohortId);
+                          fd.append("weekKey", `week-${newLiveVideo.week}`);
+                          fd.append("topicId", newLiveVideo.topicId);
+                          fd.append("youtubeId", newLiveVideo.youtubeId);
+                          const result = await addLiveSessionVideo(fd);
+                          if (result.success) {
+                            setNewLiveVideo({
+                              cohortId: "",
+                              week: 1,
+                              topicId: "",
+                              youtubeId: "",
+                            });
+                            setLiveVideoSlug(null);
+                            router.refresh();
+                          }
+                        })
+                      }
+                    >
+                      Save Live Video
+                    </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}

@@ -12,6 +12,13 @@ import {
 import { Lock } from "lucide-react";
 import { CertificateDownloadButton } from "@/components/CertificateDownloadButton";
 import { getCourses } from "@/lib/courses";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { TopicCompleteButton } from "@/components/TopicCompleteButton";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -26,7 +33,6 @@ export default async function DashboardPage() {
 
   const enrolledCourses =
     (user.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
-  const hasAnyCourses = enrolledCourses.length > 0;
 
   const progress =
     (user.publicMetadata.progress as
@@ -45,24 +51,57 @@ export default async function DashboardPage() {
       | Record<string, string>
       | undefined) ?? {};
 
+  const enrollmentTypes =
+    (user.publicMetadata.enrollmentTypes as
+      | Record<string, "subscription" | "cohort">
+      | undefined) ?? {};
+  const cohortAssignments =
+    (user.publicMetadata.cohortAssignments as Record<string, string> | undefined) ?? {};
+
+  const liveSessionVideos =
+    (user.publicMetadata.liveSessionVideos as
+      | Record<
+          string,
+          Record<string, Record<string, string[] | Record<string, string[]>>>
+        >
+      | undefined) ?? {};
+
   const claimedCertificates =
     (user.publicMetadata.claimedCertificates as string[] | undefined) ?? [];
 
   const role = (user.publicMetadata.role as string | undefined) ?? null;
   const isAdmin = role === "admin";
 
-  const isWeekUnlocked = (courseSlug: string, week: number) => {
+  const allCourses = await getCourses();
+
+  const baseCourseConfigs = isAdmin
+    ? allCourses
+    : allCourses.filter((c) => enrolledCourses.includes(c.slug));
+
+  const hasAnyCourses = baseCourseConfigs.length > 0;
+
+  const subscriptionCourses = baseCourseConfigs.filter(
+    (c) => isAdmin || (enrollmentTypes[c.slug] ?? "subscription") === "subscription",
+  );
+  const cohortCourses = baseCourseConfigs.filter(
+    (c) => isAdmin || enrollmentTypes[c.slug] === "cohort",
+  );
+
+  const isWeekUnlocked = (
+    courseSlug: string,
+    week: number,
+    courseWeeks: { topics?: { id: string }[] }[] = [],
+  ) => {
     if (isAdmin) return true;
     if (week === 1) return true;
 
-    const courseTopics =
-      progress[courseSlug]?.completedTopics ?? ([] as string[]);
-
-    const topicsPerWeek = 3;
-    const requiredCompleted = (week - 1) * topicsPerWeek;
-    if (courseTopics.length >= requiredCompleted) {
-      return true;
-    }
+    const completedTopicIds = progress[courseSlug]?.completedTopics ?? [];
+    const prevWeek = courseWeeks[week - 2];
+    const prevWeekTopics = prevWeek?.topics ?? [];
+    const prevTopicsComplete =
+      prevWeekTopics.length > 0 &&
+      prevWeekTopics.every((t) => completedTopicIds.includes(t.id));
+    if (prevTopicsComplete) return true;
 
     const enrolledAtIso = enrollmentDates[courseSlug];
     if (!enrolledAtIso) return false;
@@ -71,11 +110,6 @@ export default async function DashboardPage() {
     const requiredDays = (week - 1) * 7;
     return daysSince >= requiredDays;
   };
-
-  const allCourses = await getCourses();
-  const enrolledCourseConfigs = allCourses.filter((c) =>
-    enrolledCourses.includes(c.slug),
-  );
 
   return (
     <section className="min-h-screen bg-bg py-12 px-4 sm:px-6 md:px-10 lg:px-12">
@@ -100,7 +134,7 @@ export default async function DashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {enrolledCourseConfigs.map((course) => {
+                {baseCourseConfigs.map((course) => {
                   const courseProgress = progress[course.slug];
                   const completedTopics =
                     courseProgress?.completedTopics?.length ?? 0;
@@ -140,139 +174,306 @@ export default async function DashboardPage() {
         )}
 
         <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
-          <section>
-            <h2 className="text-2xl font-semibold text-primary">
-              My Courses
-            </h2>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-semibold text-primary">My Courses</h2>
 
             {!hasAnyCourses ? (
-              <p className="mt-4 text-sm text-text-secondary sm:text-base">
-                No courses enrolled yet.{" "}
-                                <a
-                  href="/courses"
-                                  className="font-medium text-primary hover:text-spark"
-                >
-                  Browse courses
-                </a>{" "}
-                to get started.
+              <p className="mt-2 text-sm text-text-secondary sm:text-base">
+                No courses enrolled yet. <a href="/courses" className="font-medium text-primary hover:text-spark">Browse courses</a> to get started.
               </p>
             ) : (
-              <div className="mt-4 space-y-6">
-                {enrolledCourseConfigs.map((course) => {
-                  const courseProgress = progress[course.slug];
-                  const completedTopics =
-                    courseProgress?.completedTopics?.length ?? 0;
-                  const totalTopics =
-                    course.weeksDetail?.reduce(
-                      (sum, w) => sum + (w.topics?.length ?? 0),
-                      0,
-                    ) ?? 0;
-                  const percent =
-                    totalTopics > 0
-                      ? Math.min(
-                          100,
-                          Math.round((completedTopics / totalTopics) * 100),
-                        )
-                      : 0;
-                  const hasClaimed = claimedCertificates.includes(course.slug);
+              <>
+                {subscriptionCourses.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-spark">
+                      Pre-Recorded Library
+                    </h3>
+                    {subscriptionCourses.map((course) => {
+                      const courseProgress = progress[course.slug];
+                      const completedTopics =
+                        courseProgress?.completedTopics?.length ?? 0;
+                      const totalTopics =
+                        course.weeksDetail?.reduce(
+                          (sum, w) => sum + (w.topics?.length ?? 0),
+                          0,
+                        ) ?? 0;
+                      const percent =
+                        totalTopics > 0
+                          ? Math.min(
+                              100,
+                              Math.round((completedTopics / totalTopics) * 100),
+                            )
+                          : 0;
+                      const hasClaimed = claimedCertificates.includes(course.slug);
+                      const weeks = course.weeksDetail ?? [];
 
-                  // Fallback hardcoded videos for legacy AI/Vibe courses
-                  const fallbackVideos =
-                    course.slug === "ai-automation"
-                      ? [
-                          { week: 1, title: "Week 1: Foundations", youtubeId: "dQw4w9WgXcQ" },
-                          { week: 2, title: "Week 2: Workflows", youtubeId: "dQw4w9WgXcQ" },
-                          { week: 3, title: "Week 3: Language Models & Retrieval", youtubeId: "dQw4w9WgXcQ" },
-                          { week: 4, title: "Week 4: Tool Integration & Agents", youtubeId: "dQw4w9WgXcQ" },
-                          { week: 5, title: "Week 5: Shipping Production Automations", youtubeId: "dQw4w9WgXcQ" },
-                          { week: 6, title: "Week 6: Capstone – Design & Ship", youtubeId: "dQw4w9WgXcQ" },
-                        ]
-                      : course.slug === "vibe-coding"
-                        ? [
-                            { week: 1, title: "Week 1: Vibe Fundamentals", youtubeId: "dQw4w9WgXcQ" },
-                            { week: 2, title: "Week 2: Creative Systems", youtubeId: "dQw4w9WgXcQ" },
-                            { week: 3, title: "Week 3: Generative Visuals", youtubeId: "dQw4w9WgXcQ" },
-                            { week: 4, title: "Week 4: Interactive Vibe Interfaces", youtubeId: "dQw4w9WgXcQ" },
-                            { week: 5, title: "Week 5: AI-Assisted Creation", youtubeId: "dQw4w9WgXcQ" },
-                            { week: 6, title: "Week 6: Vibe Capstone", youtubeId: "dQw4w9WgXcQ" },
-                          ]
-                        : [];
+                      return (
+                        <div
+                          key={`subscription-${course.slug}`}
+                          className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+                        >
+                          <h4 className="text-xl font-semibold text-primary">
+                            {course.title} Library
+                          </h4>
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs font-medium uppercase tracking-wide text-growth">
+                              Progress: {percent}% complete
+                            </p>
+                            <Progress value={percent} className="bg-bg/60">
+                              <ProgressIndicator className="bg-growth" />
+                            </Progress>
+                            {percent >= 100 && !hasClaimed && (
+                              <CertificateDownloadButton
+                                userName={displayName}
+                                courseName={course.title}
+                                courseSlug={course.slug as unknown as string}
+                              />
+                            )}
+                          </div>
 
-                  const videos = (course.videos && course.videos.length > 0)
-                    ? course.videos
-                    : fallbackVideos;
+                          <Accordion className="mt-4 space-y-2">
+                            {weeks.map((week, weekIndex) => {
+                              const weekNumber = weekIndex + 1;
+                              const unlocked = isWeekUnlocked(
+                                course.slug,
+                                weekNumber,
+                                weeks,
+                              );
+                              const topics = week.topics ?? [];
 
-                  return (
-                    <div
-                      key={course.slug}
-                      className="rounded-xl border border-border bg-surface p-6 shadow-sm"
-                    >
-                      <h3 className="text-xl font-semibold text-primary">
-                        {course.title} Recordings
-                      </h3>
-                      <div className="mt-2 space-y-1">
-                        <p className="text-xs font-medium uppercase tracking-wide text-growth">
-                          Progress: {percent}% complete
-                        </p>
-                        <Progress value={percent} className="bg-bg/60">
-                          <ProgressIndicator className="bg-growth" />
-                        </Progress>
-                        {percent >= 100 && !hasClaimed && (
-                          <CertificateDownloadButton
-                            userName={displayName}
-                            courseName={course.title}
-                            courseSlug={course.slug as unknown as string}
-                          />
-                        )}
-                      </div>
+                              return (
+                                <AccordionItem
+                                  key={`${course.slug}-sub-week-${weekNumber}`}
+                                  value={`${course.slug}-sub-week-${weekNumber}`}
+                                >
+                                  <AccordionTrigger className="text-left text-sm font-semibold text-primary">
+                                    Week {weekNumber}: {week.title}
+                                  </AccordionTrigger>
+                                  <AccordionContent className="space-y-3">
+                                    {!unlocked ? (
+                                      <div className="space-y-2 rounded-lg border border-dashed border-border bg-bg/40 p-4 text-xs text-text-secondary">
+                                        <p className="flex items-center gap-2 font-medium text-text-primary">
+                                          <Lock className="h-4 w-4 text-text-secondary" />
+                                          <span>Week {weekNumber} is locked</span>
+                                        </p>
+                                        <p>
+                                          Complete previous topics or wait for drip unlock to access this week.
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      topics.map((topic) => (
+                                        <div
+                                          key={topic.id}
+                                          className="rounded-lg border border-border bg-surface p-4 shadow-sm"
+                                        >
+                                          <div className="flex items-center justify-between gap-3">
+                                            <p className="text-sm font-medium text-text-primary">
+                                              {topic.title}
+                                            </p>
+                                            <TopicCompleteButton
+                                              courseSlug={course.slug}
+                                              itemId={topic.id}
+                                              type="topic"
+                                            />
+                                          </div>
 
-                      {videos.length > 0 ? (
-                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                          {videos.map(
-                            (video: { week: number; title: string; youtubeId: string }) =>
-                              isWeekUnlocked(course.slug, video.week) ? (
-                              <div key={video.youtubeId} className="space-y-2">
-                                <p className="text-sm font-medium text-text-primary">
-                                  {video.title}
-                                </p>
-                                <div className="aspect-video overflow-hidden rounded-lg border border-border shadow-sm">
-                                  <iframe
-                                    width="100%"
-                                    height="100%"
-                                    src={`https://www.youtube.com/embed/${video.youtubeId}?rel=0`}
-                                    title={video.title}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    className="h-full w-full"
-                                  />
-                                </div>
-                              </div>
-                            ) : (
-                              <div
-                                key={video.youtubeId}
-                                className="space-y-2 rounded-lg border border-dashed border-border bg-bg/40 p-4 text-xs text-text-secondary"
-                              >
-                                <p className="flex items-center gap-2 font-medium text-text-primary">
-                                  <Lock className="h-4 w-4 text-text-secondary" />
-                                  <span>{video.title} locked</span>
-                                </p>
-                                <p>
-                                  Complete previous weeks or wait for drip unlock to
-                                  access this recording.
-                                </p>
-                              </div>
-                            ),
-                          )}
+                                          {topic.videoId ? (
+                                            <div className="mt-3 aspect-video overflow-hidden rounded-lg border border-border shadow-sm">
+                                              <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${topic.videoId}?rel=0`}
+                                                title={`${course.title} - ${topic.title}`}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className="h-full w-full"
+                                              />
+                                            </div>
+                                          ) : (
+                                            <p className="mt-3 rounded-md border border-dashed border-border bg-bg/40 px-3 py-2 text-xs text-text-secondary">
+                                              Video coming soon for this topic.
+                                            </p>
+                                          )}
+                                        </div>
+                                      ))
+                                    )}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              );
+                            })}
+                          </Accordion>
                         </div>
-                      ) : (
-                        <p className="mt-4 text-xs text-text-secondary">
-                          No recordings configured yet for this course.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {cohortCourses.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      Live Session Recordings
+                    </h3>
+                    {cohortCourses.map((course) => {
+                      const courseProgress = progress[course.slug];
+                      const completedTopics =
+                        courseProgress?.completedTopics?.length ?? 0;
+                      const totalTopics =
+                        course.weeksDetail?.reduce(
+                          (sum, w) => sum + (w.topics?.length ?? 0),
+                          0,
+                        ) ?? 0;
+                      const percent =
+                        totalTopics > 0
+                          ? Math.min(
+                              100,
+                              Math.round((completedTopics / totalTopics) * 100),
+                            )
+                          : 0;
+                      const weeks = course.weeksDetail ?? [];
+                      const courseCohortsFromCourse = course.cohortLiveVideos ?? {};
+                      const courseCohortsFromUser = liveSessionVideos[course.slug] ?? {};
+                      const courseCohorts =
+                        Object.keys(courseCohortsFromCourse).length > 0
+                          ? courseCohortsFromCourse
+                          : courseCohortsFromUser;
+                      const availableCohortIds = Object.keys(courseCohorts);
+                      const assignedCohortId =
+                        cohortAssignments[course.slug] ??
+                        (availableCohortIds.length === 1
+                          ? availableCohortIds[0]
+                          : isAdmin
+                            ? availableCohortIds[0]
+                            : undefined);
+                      const liveByWeek = assignedCohortId
+                        ? (courseCohorts[assignedCohortId] ?? {})
+                        : {};
+
+                      return (
+                        <div
+                          key={`cohort-${course.slug}`}
+                          className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+                        >
+                          <h4 className="text-xl font-semibold text-primary">
+                            {course.title} Cohort Recordings
+                          </h4>
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs font-medium uppercase tracking-wide text-growth">
+                              Progress: {percent}% complete
+                            </p>
+                            <Progress value={percent} className="bg-bg/60">
+                              <ProgressIndicator className="bg-growth" />
+                            </Progress>
+                          </div>
+
+                          <Accordion className="mt-4 space-y-2">
+                            {weeks.map((week, weekIndex) => {
+                              const weekNumber = weekIndex + 1;
+                              const weekKey = `week-${weekNumber}`;
+                              const unlocked = isWeekUnlocked(
+                                course.slug,
+                                weekNumber,
+                                weeks,
+                              );
+                              const topics = week.topics ?? [];
+                              const weekBucket = liveByWeek[weekKey];
+                              const weekVideosByTopic: Record<string, string[]> = Array.isArray(
+                                weekBucket,
+                              )
+                                ? { __general__: weekBucket }
+                                : (weekBucket ?? {});
+
+                              return (
+                                <AccordionItem
+                                  key={`${course.slug}-cohort-week-${weekNumber}`}
+                                  value={`${course.slug}-cohort-week-${weekNumber}`}
+                                >
+                                  <AccordionTrigger className="text-left text-sm font-semibold text-primary">
+                                    Week {weekNumber}: {week.title}
+                                  </AccordionTrigger>
+                                  <AccordionContent className="space-y-3">
+                                    {!unlocked ? (
+                                      <div className="space-y-2 rounded-lg border border-dashed border-border bg-bg/40 p-4 text-xs text-text-secondary">
+                                        <p className="flex items-center gap-2 font-medium text-text-primary">
+                                          <Lock className="h-4 w-4 text-text-secondary" />
+                                          <span>Week {weekNumber} is locked</span>
+                                        </p>
+                                        <p>
+                                          Complete previous topics or wait for drip unlock to access this week.
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        {!assignedCohortId ? (
+                                          <p className="rounded-md border border-dashed border-border bg-bg/40 px-3 py-2 text-xs text-text-secondary">
+                                            Waiting for cohort assignment. Your admin needs to assign you to a cohort for this course.
+                                          </p>
+                                        ) : (
+                                          <div className="space-y-3">
+                                            {topics.map((topic) => {
+                                              const topicVideos = weekVideosByTopic[topic.id] ?? [];
+                                              return (
+                                                <div
+                                                  key={`${course.slug}-${weekKey}-${topic.id}-cohort-card`}
+                                                  className="rounded-lg border border-border bg-surface p-4 shadow-sm"
+                                                >
+                                                  <div className="flex items-center justify-between gap-3">
+                                                    <p className="text-sm font-medium text-text-primary">
+                                                      {topic.title}
+                                                    </p>
+                                                    <TopicCompleteButton
+                                                      courseSlug={course.slug}
+                                                      itemId={topic.id}
+                                                      type="topic"
+                                                    />
+                                                  </div>
+
+                                                  {topicVideos.length > 0 ? (
+                                                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                                      {topicVideos.map((videoId, idx) => (
+                                                        <div
+                                                          key={`${course.slug}-${weekKey}-${topic.id}-${videoId}-${idx}`}
+                                                          className="space-y-1"
+                                                        >
+                                                          <p className="text-xs font-medium text-text-secondary">
+                                                            Live session video {idx + 1}
+                                                          </p>
+                                                          <div className="aspect-video overflow-hidden rounded-lg border border-border shadow-sm">
+                                                            <iframe
+                                                              width="100%"
+                                                              height="100%"
+                                                              src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                                                              title={`${course.title} ${weekKey} ${topic.title} live ${idx + 1}`}
+                                                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                              allowFullScreen
+                                                              className="h-full w-full"
+                                                            />
+                                                          </div>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  ) : (
+                                                    <p className="mt-3 rounded-md border border-dashed border-border bg-bg/40 px-3 py-2 text-xs text-text-secondary">
+                                                      Live session video will appear here after the class.
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              );
+                            })}
+                          </Accordion>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </section>
 
@@ -332,4 +533,3 @@ export default async function DashboardPage() {
     </section>
   );
 }
-

@@ -35,22 +35,6 @@ export function Footer() {
                     Courses
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/ai-automation"
-                    className="transition-colors hover:text-spark"
-                  >
-                    AI Automation
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/vibe-coding"
-                    className="transition-colors hover:text-spark"
-                  >
-                    Vibe Coding
-                  </Link>
-                </li>
               </ul>
             </div>
 

@@ -18,6 +18,8 @@ type AdminResult =
 type CourseTopic = {
   id: string;
   title: string;
+  videoId?: string;
+  subtopics?: string[];
   bullets?: string[];
 };
 
@@ -32,6 +34,11 @@ type Course = {
   title: string;
   description: string;
   weeks: number;
+  cohorts?: string[];
+  cohortLiveVideos?: Record<
+    string,
+    Record<string, string[] | Record<string, string[]>>
+  >;
   weeksDetail?: CourseWeek[];
   videos?: { week: number; title: string; youtubeId: string }[];
 };
@@ -83,7 +90,13 @@ export async function adminListUsers() {
     email: string | null;
     role: string | null;
     enrolledCourses: string[];
-    pendingEnrollments: { courseSlug: string; requestedAt: string }[];
+    enrollmentTypes: Record<string, "subscription" | "cohort">;
+    cohortAssignments: Record<string, string>;
+    pendingEnrollments: {
+      courseSlug: string;
+      requestedAt: string;
+      enrollmentType?: "subscription" | "cohort";
+    }[];
     progressSummary: Record<string, { completedTopics: number; completedWeeks: number }>;
   };
 
@@ -104,8 +117,19 @@ export async function adminListUsers() {
       (u.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
     const pending =
       (u.publicMetadata.pendingEnrollments as
-        | { courseSlug: string; requestedAt: string; message?: string }[]
+        | {
+            courseSlug: string;
+            requestedAt: string;
+            message?: string;
+            enrollmentType?: "subscription" | "cohort";
+          }[]
         | undefined) ?? [];
+    const enrollmentTypes =
+      (u.publicMetadata.enrollmentTypes as
+        | Record<string, "subscription" | "cohort">
+        | undefined) ?? {};
+    const cohortAssignments =
+      (u.publicMetadata.cohortAssignments as Record<string, string> | undefined) ?? {};
     const progress =
       (u.publicMetadata.progress as
         | Record<
@@ -131,9 +155,12 @@ export async function adminListUsers() {
       email: primaryEmail,
       role: role ?? null,
       enrolledCourses: enrolled,
+      enrollmentTypes,
+      cohortAssignments,
       pendingEnrollments: pending.map((p) => ({
         courseSlug: p.courseSlug,
         requestedAt: p.requestedAt,
+        enrollmentType: p.enrollmentType,
       })),
       progressSummary: summary,
     });
@@ -328,12 +355,17 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
     const { userId: adminUserId } = await auth();
     const { client } = await requireAdmin();
     const slug = (formData.get("slug") as string | null)?.trim();
+    const topicId = (formData.get("topicId") as string | null)?.trim();
     const weekStr = (formData.get("week") as string | null) ?? "1";
     const week = Number.parseInt(weekStr, 10) || 1;
     const title =
       (formData.get("title") as string | null)?.trim() ?? `Week ${week}`;
-    const youtubeId =
+    const youtubeIdInput =
       (formData.get("youtubeId") as string | null)?.trim() ?? "";
+    const youtubeId = youtubeIdInput
+      .replace(/^https?:\/\/(www\.)?youtu\.be\//i, "")
+      .replace(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=/i, "")
+      .trim();
 
     if (!slug || !youtubeId) {
       return { success: false, error: "Slug and YouTube ID are required" };
@@ -346,10 +378,32 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
     }
 
     const course = courses[idx];
-    const videos = course.videos ?? [];
-    videos.push({ week, title, youtubeId });
+    const weeksDetail = course.weeksDetail ?? [];
+    let updatedByTopic = false;
 
-    courses[idx] = { ...course, videos };
+    // Preferred mode: assign video to a specific topic.
+    if (topicId && weeksDetail.length > 0) {
+      const updatedWeeks = weeksDetail.map((w) => ({
+        ...w,
+        topics: (w.topics ?? []).map((t) =>
+          t.id === topicId ? { ...t, videoId: youtubeId } : t,
+        ),
+      }));
+      const foundTopic = updatedWeeks.some((w) =>
+        (w.topics ?? []).some((t) => t.id === topicId),
+      );
+      if (foundTopic) {
+        courses[idx] = { ...course, weeksDetail: updatedWeeks };
+        updatedByTopic = true;
+      }
+    }
+
+    // Back-compat mode: keep legacy week videos list for older records.
+    if (!updatedByTopic) {
+      const videos = course.videos ?? [];
+      videos.push({ week, title, youtubeId });
+      courses[idx] = { ...course, videos };
+    }
     await writeCourses(courses);
 
     // Best-effort email notification to enrolled learners.
@@ -382,7 +436,7 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
                 name: displayName,
                 course: course.title,
                 week,
-                videoTitle: title,
+                videoTitle: topicId ? `New lesson video (${topicId})` : title,
                 videoLink: videoLink,
               }),
             );
@@ -415,7 +469,7 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
                 name: displayName,
                 course: course.title,
                 week,
-                videoTitle: title,
+                videoTitle: topicId ? `New lesson video (${topicId})` : title,
                 videoLink: videoLink,
               }),
             );
@@ -512,6 +566,246 @@ export async function updateCourseCurriculum(
   } catch (err) {
     console.error("updateCourseCurriculum error", err);
     return { success: false, error: "Failed to update curriculum" };
+  }
+}
+
+export async function addLiveSessionVideo(formData: FormData): Promise<AdminResult> {
+  try {
+    const { client } = await requireAdmin();
+    const courseSlug = (formData.get("courseSlug") as string | null)?.trim();
+    const cohortId = (formData.get("cohortId") as string | null)?.trim();
+    const weekKey = (formData.get("weekKey") as string | null)?.trim();
+    const topicId = (formData.get("topicId") as string | null)?.trim() || "__general__";
+    const youtubeIdInput = (formData.get("youtubeId") as string | null)?.trim();
+
+    if (!courseSlug || !cohortId || !weekKey || !youtubeIdInput) {
+      return {
+        success: false,
+        error: "courseSlug, cohortId, weekKey and youtubeId are required",
+      };
+    }
+
+    const youtubeId = youtubeIdInput
+      .replace(/^https?:\/\/(www\.)?youtu\.be\//i, "")
+      .replace(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=/i, "")
+      .trim();
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === courseSlug);
+    if (idx === -1) {
+      return { success: false, error: "Course not found" };
+    }
+    const course = courses[idx];
+    const cohortLiveVideos = course.cohortLiveVideos ?? {};
+    const existingCohortVideos = cohortLiveVideos[cohortId] ?? {};
+    const currentWeekBucket = existingCohortVideos[weekKey];
+    const normalizedWeekBucket: Record<string, string[]> = Array.isArray(currentWeekBucket)
+      ? { __general__: currentWeekBucket }
+      : (currentWeekBucket ?? {});
+    const existingTopicVideos = normalizedWeekBucket[topicId] ?? [];
+    if (!existingTopicVideos.includes(youtubeId)) {
+      normalizedWeekBucket[topicId] = [...existingTopicVideos, youtubeId];
+    }
+    courses[idx] = {
+      ...course,
+      cohortLiveVideos: {
+        ...cohortLiveVideos,
+        [cohortId]: {
+          ...existingCohortVideos,
+          [weekKey]: normalizedWeekBucket,
+        },
+      },
+      cohorts: Array.from(new Set([...(course.cohorts ?? []), cohortId])),
+    };
+    await writeCourses(courses);
+
+    const list = await client.users.getUserList({});
+    const users = list.data ?? [];
+
+    for (const u of users) {
+      const enrolledCourses =
+        (u.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
+      const enrollmentTypes =
+        (u.publicMetadata.enrollmentTypes as
+          | Record<string, "subscription" | "cohort">
+          | undefined) ?? {};
+      const cohortAssignments =
+        (u.publicMetadata.cohortAssignments as Record<string, string> | undefined) ?? {};
+
+      if (!enrolledCourses.includes(courseSlug)) continue;
+      if (enrollmentTypes[courseSlug] !== "cohort") continue;
+      if (cohortAssignments[courseSlug] !== cohortId) continue;
+
+      const liveSessionVideos =
+        (u.publicMetadata.liveSessionVideos as
+          | Record<string, Record<string, Record<string, string[]>>>
+          | undefined) ?? {};
+
+      const courseVideos = liveSessionVideos[courseSlug] ?? {};
+      const cohortVideos = courseVideos[cohortId] ?? {};
+      const existingUserWeekVideos = cohortVideos[weekKey];
+      const normalizedUserWeekVideos: Record<string, string[]> = Array.isArray(existingUserWeekVideos)
+        ? { __general__: existingUserWeekVideos }
+        : (existingUserWeekVideos ?? {});
+      const existingUserTopicVideos = normalizedUserWeekVideos[topicId] ?? [];
+      if (!existingUserTopicVideos.includes(youtubeId)) {
+        normalizedUserWeekVideos[topicId] = [...existingUserTopicVideos, youtubeId];
+      }
+
+      await client.users.updateUserMetadata(u.id, {
+        publicMetadata: {
+          ...u.publicMetadata,
+          liveSessionVideos: {
+            ...liveSessionVideos,
+            [courseSlug]: {
+              ...courseVideos,
+              [cohortId]: {
+                ...cohortVideos,
+                [weekKey]: normalizedUserWeekVideos,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    return { success: true, message: "Live session video saved for this cohort" };
+  } catch (err) {
+    console.error("addLiveSessionVideo error", err);
+    return { success: false, error: "Failed to add live session video" };
+  }
+}
+
+export async function createCourseCohort(formData: FormData): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const courseSlug = (formData.get("courseSlug") as string | null)?.trim();
+    const cohortId = (formData.get("cohortId") as string | null)?.trim();
+    if (!courseSlug || !cohortId) {
+      return { success: false, error: "courseSlug and cohortId are required" };
+    }
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === courseSlug);
+    if (idx === -1) {
+      return { success: false, error: "Course not found" };
+    }
+
+    const course = courses[idx];
+    const cohorts = course.cohorts ?? [];
+    if (!cohorts.includes(cohortId)) {
+      courses[idx] = {
+        ...course,
+        cohorts: [...cohorts, cohortId],
+        cohortLiveVideos: {
+          ...(course.cohortLiveVideos ?? {}),
+          [cohortId]: (course.cohortLiveVideos ?? {})[cohortId] ?? {},
+        },
+      };
+      await writeCourses(courses);
+    }
+
+    return { success: true, message: "Cohort created" };
+  } catch (err) {
+    console.error("createCourseCohort error", err);
+    return { success: false, error: "Failed to create cohort" };
+  }
+}
+
+export async function updateCohortLiveVideo(formData: FormData): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const courseSlug = (formData.get("courseSlug") as string | null)?.trim();
+    const cohortId = (formData.get("cohortId") as string | null)?.trim();
+    const weekKey = (formData.get("weekKey") as string | null)?.trim();
+    const topicId = ((formData.get("topicId") as string | null)?.trim() || "__general__");
+    const oldYoutubeId = (formData.get("oldYoutubeId") as string | null)?.trim();
+    const newYoutubeId = (formData.get("newYoutubeId") as string | null)?.trim();
+
+    if (!courseSlug || !cohortId || !weekKey || !oldYoutubeId || !newYoutubeId) {
+      return {
+        success: false,
+        error: "courseSlug, cohortId, weekKey, oldYoutubeId and newYoutubeId are required",
+      };
+    }
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === courseSlug);
+    if (idx === -1) return { success: false, error: "Course not found" };
+
+    const course = courses[idx];
+    const cohortLiveVideos = course.cohortLiveVideos ?? {};
+    const cohortVideos = cohortLiveVideos[cohortId] ?? {};
+    const weekBucket = cohortVideos[weekKey];
+    const normalizedWeekBucket: Record<string, string[]> = Array.isArray(weekBucket)
+      ? { __general__: weekBucket }
+      : (weekBucket ?? {});
+    const topicVideos = normalizedWeekBucket[topicId] ?? [];
+    const videoIdx = topicVideos.findIndex((v) => v === oldYoutubeId);
+    if (videoIdx === -1) return { success: false, error: "Video not found" };
+    topicVideos[videoIdx] = newYoutubeId;
+    normalizedWeekBucket[topicId] = topicVideos;
+
+    courses[idx] = {
+      ...course,
+      cohortLiveVideos: {
+        ...cohortLiveVideos,
+        [cohortId]: {
+          ...cohortVideos,
+          [weekKey]: normalizedWeekBucket,
+        },
+      },
+    };
+    await writeCourses(courses);
+    return { success: true, message: "Cohort video updated" };
+  } catch (err) {
+    console.error("updateCohortLiveVideo error", err);
+    return { success: false, error: "Failed to update cohort video" };
+  }
+}
+
+export async function deleteCohortLiveVideo(formData: FormData): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const courseSlug = (formData.get("courseSlug") as string | null)?.trim();
+    const cohortId = (formData.get("cohortId") as string | null)?.trim();
+    const weekKey = (formData.get("weekKey") as string | null)?.trim();
+    const topicId = ((formData.get("topicId") as string | null)?.trim() || "__general__");
+    const youtubeId = (formData.get("youtubeId") as string | null)?.trim();
+
+    if (!courseSlug || !cohortId || !weekKey || !youtubeId) {
+      return { success: false, error: "courseSlug, cohortId, weekKey and youtubeId are required" };
+    }
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === courseSlug);
+    if (idx === -1) return { success: false, error: "Course not found" };
+
+    const course = courses[idx];
+    const cohortLiveVideos = course.cohortLiveVideos ?? {};
+    const cohortVideos = cohortLiveVideos[cohortId] ?? {};
+    const weekBucket = cohortVideos[weekKey];
+    const normalizedWeekBucket: Record<string, string[]> = Array.isArray(weekBucket)
+      ? { __general__: weekBucket }
+      : (weekBucket ?? {});
+    const topicVideos = normalizedWeekBucket[topicId] ?? [];
+    normalizedWeekBucket[topicId] = topicVideos.filter((v) => v !== youtubeId);
+
+    courses[idx] = {
+      ...course,
+      cohortLiveVideos: {
+        ...cohortLiveVideos,
+        [cohortId]: {
+          ...cohortVideos,
+          [weekKey]: normalizedWeekBucket,
+        },
+      },
+    };
+    await writeCourses(courses);
+    return { success: true, message: "Cohort video deleted" };
+  } catch (err) {
+    console.error("deleteCohortLiveVideo error", err);
+    return { success: false, error: "Failed to delete cohort video" };
   }
 }
 

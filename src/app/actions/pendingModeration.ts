@@ -17,6 +17,8 @@ export type PendingRow = {
   courseSlug: string;
   requestedAt: string;
   message?: string;
+  enrollmentType?: "subscription" | "cohort";
+  preferredCohort?: string;
 };
 
 export async function listPendingEnrollments(): Promise<PendingRow[]> {
@@ -35,7 +37,13 @@ export async function listPendingEnrollments(): Promise<PendingRow[]> {
   for (const u of users) {
     const pending =
       (u.publicMetadata.pendingEnrollments as
-        | { courseSlug: string; requestedAt: string; message?: string }[]
+        | {
+            courseSlug: string;
+            requestedAt: string;
+            message?: string;
+            enrollmentType?: "subscription" | "cohort";
+            preferredCohort?: string;
+          }[]
         | undefined) ?? [];
     if (!pending.length) continue;
 
@@ -52,6 +60,8 @@ export async function listPendingEnrollments(): Promise<PendingRow[]> {
         courseSlug: p.courseSlug,
         requestedAt: p.requestedAt,
         message: p.message,
+        enrollmentType: p.enrollmentType ?? "subscription",
+        preferredCohort: p.preferredCohort,
       });
     }
   }
@@ -70,6 +80,8 @@ type ModerationResult =
 export async function approveEnrollment(
   targetUserId: string,
   courseSlug: string,
+  enrollmentType: "subscription" | "cohort" = "subscription",
+  cohortId?: string,
 ): Promise<ModerationResult> {
   const { userId } = await auth();
   if (!userId) return { success: false, error: "Not authenticated" };
@@ -85,8 +97,27 @@ export async function approveEnrollment(
     (user.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
   const pending =
     (user.publicMetadata.pendingEnrollments as
-      | { courseSlug: string; requestedAt: string; message?: string }[]
+      | {
+          courseSlug: string;
+          requestedAt: string;
+          message?: string;
+          enrollmentType?: "subscription" | "cohort";
+          preferredCohort?: string;
+        }[]
       | undefined) ?? [];
+  const enrollmentTypes =
+    (user.publicMetadata.enrollmentTypes as
+      | Record<string, "subscription" | "cohort">
+      | undefined) ?? {};
+  const cohortAssignments =
+    (user.publicMetadata.cohortAssignments as Record<string, string> | undefined) ?? {};
+  const pendingForCourse = pending.find((p) => p.courseSlug === courseSlug);
+  const resolvedCohortId =
+    enrollmentType === "cohort"
+      ? (cohortId && cohortId.trim()) ||
+        pendingForCourse?.preferredCohort ||
+        `${courseSlug}-general`
+      : undefined;
 
   const updatedEnrolled = enrolled.includes(courseSlug)
     ? enrolled
@@ -98,6 +129,17 @@ export async function approveEnrollment(
       ...user.publicMetadata,
       enrolledCourses: updatedEnrolled,
       pendingEnrollments: updatedPending,
+      enrollmentTypes: {
+        ...enrollmentTypes,
+        [courseSlug]: enrollmentType,
+      },
+      cohortAssignments:
+        enrollmentType === "cohort" && resolvedCohortId
+          ? {
+              ...cohortAssignments,
+              [courseSlug]: resolvedCohortId,
+            }
+          : cohortAssignments,
     },
   });
 
@@ -150,7 +192,13 @@ export async function rejectEnrollment(
 
   const pending =
     (user.publicMetadata.pendingEnrollments as
-      | { courseSlug: string; requestedAt: string; message?: string }[]
+      | {
+          courseSlug: string;
+          requestedAt: string;
+          message?: string;
+          enrollmentType?: "subscription" | "cohort";
+          preferredCohort?: string;
+        }[]
       | undefined) ?? [];
 
   const updatedPending = pending.filter((p) => p.courseSlug !== courseSlug);

@@ -122,14 +122,22 @@ export function UsersTable() {
                     "—"
                   ) : (
                     <div className="flex flex-wrap gap-1">
-                      {row.enrolledCourses.map((c) => (
+                      {row.enrolledCourses.map((c) => {
+                        const enrollmentType =
+                          row.enrollmentTypes[c] ?? "subscription";
+                        const cohortId = row.cohortAssignments[c];
+                        return (
                         <span
                           key={c}
                           className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary"
                         >
-                          {c}
+                          {c} • {enrollmentType}
+                          {enrollmentType === "cohort" && cohortId
+                            ? ` • ${cohortId}`
+                            : ""}
                         </span>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </td>

@@ -32,12 +32,7 @@ export default async function Home() {
       {courses.length > 0 && (
         <div className="mt-12 grid gap-8 md:grid-cols-2">
           {courses.map((course) => {
-            const href =
-              course.slug === "ai-automation"
-                ? "/ai-automation"
-                : course.slug === "vibe-coding"
-                  ? "/vibe-coding"
-                  : `/courses/${course.slug}`;
+            const href = `/courses/${course.slug}`;
 
             return (
               <div

@@ -4,6 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   approveEnrollment,
   rejectEnrollment,
@@ -15,6 +17,10 @@ export function PendingApprovals() {
   const [rows, setRows] = useState<PendingRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionPending, startAction] = useTransition();
+  const [chosenTypes, setChosenTypes] = useState<
+    Record<string, "subscription" | "cohort">
+  >({});
+  const [chosenCohorts, setChosenCohorts] = useState<Record<string, string>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -24,6 +30,16 @@ export function PendingApprovals() {
       const data = await listPendingEnrollments();
       if (!cancelled) {
         setRows(data);
+        const initialTypes: Record<string, "subscription" | "cohort"> = {};
+        const initialCohorts: Record<string, string> = {};
+        for (const row of data) {
+          const key = `${row.userId}-${row.courseSlug}`;
+          initialTypes[key] =
+            row.enrollmentType ?? "subscription";
+          if (row.preferredCohort) initialCohorts[key] = row.preferredCohort;
+        }
+        setChosenTypes(initialTypes);
+        setChosenCohorts(initialCohorts);
         setIsLoading(false);
       }
     })();
@@ -33,8 +49,16 @@ export function PendingApprovals() {
   }, []);
 
   const handleApprove = (userId: string, courseSlug: string) => {
+    const key = `${userId}-${courseSlug}`;
+    const selectedType = chosenTypes[key] ?? "subscription";
+    const selectedCohort = chosenCohorts[key]?.trim();
     startAction(async () => {
-      const result = await approveEnrollment(userId, courseSlug);
+      const result = await approveEnrollment(
+        userId,
+        courseSlug,
+        selectedType,
+        selectedType === "cohort" ? selectedCohort : undefined,
+      );
       if (result.success) {
         setRows((prev) =>
           prev.filter(
@@ -85,6 +109,7 @@ export function PendingApprovals() {
             <th className="px-3 py-2">User</th>
             <th className="px-3 py-2">Email</th>
             <th className="px-3 py-2">Course</th>
+            <th className="px-3 py-2">Type</th>
             <th className="px-3 py-2">Requested</th>
             <th className="px-3 py-2">Message</th>
             <th className="px-3 py-2 text-right">Actions</th>
@@ -101,6 +126,39 @@ export function PendingApprovals() {
               </td>
               <td className="px-3 py-2">{row.email ?? "—"}</td>
               <td className="px-3 py-2">{row.courseSlug}</td>
+              <td className="px-3 py-2 text-xs">
+                <Select
+                  value={
+                    chosenTypes[`${row.userId}-${row.courseSlug}`] ??
+                    row.enrollmentType ??
+                    "subscription"
+                  }
+                  onChange={(e) =>
+                    setChosenTypes((prev) => ({
+                      ...prev,
+                      [`${row.userId}-${row.courseSlug}`]:
+                        e.target.value === "cohort" ? "cohort" : "subscription",
+                    }))
+                  }
+                >
+                  <option value="subscription">subscription</option>
+                  <option value="cohort">cohort</option>
+                </Select>
+                {(chosenTypes[`${row.userId}-${row.courseSlug}`] ?? row.enrollmentType) ===
+                  "cohort" && (
+                  <Input
+                    value={chosenCohorts[`${row.userId}-${row.courseSlug}`] ?? row.preferredCohort ?? ""}
+                    onChange={(e) =>
+                      setChosenCohorts((prev) => ({
+                        ...prev,
+                        [`${row.userId}-${row.courseSlug}`]: e.target.value,
+                      }))
+                    }
+                    placeholder="cohort-id"
+                    className="mt-1 h-8 text-xs"
+                  />
+                )}
+              </td>
               <td className="px-3 py-2 text-xs">
                 {new Date(row.requestedAt).toLocaleString()}
               </td>

@@ -16,12 +16,7 @@ export default async function CoursesPage() {
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         {courses.map((course) => {
-          const href =
-            course.slug === "ai-automation"
-              ? "/ai-automation"
-              : course.slug === "vibe-coding"
-                ? "/vibe-coding"
-                : `/courses/${course.slug}`;
+          const href = `/courses/${course.slug}`;
 
           return (
             <article

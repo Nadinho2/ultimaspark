@@ -7,20 +7,236 @@
     "weeksDetail": [
       {
         "title": "Foundations of AI Automation",
-        "summary": "Core concepts, agents, and prompting.",
+        "summary": "Core concepts, AI workflow architecture, and practical prompt systems.",
         "topics": [
           {
             "id": "ai-automation-week-1-topic-1",
             "title": "Introduction to AI Agents",
-            "bullets": [
-              "What agents are and why they matter",
-              "Key components: memory, tools, policies"
+            "videoId": "6_2KzTz7uek&list=RD6_2KzTz7uek&start_radio=1",
+            "subtopics": [
+              "Agent lifecycle",
+              "Single vs multi-agent",
+              "Common use cases"
+            ]
+          },
+          {
+            "id": "ai-automation-week-1-topic-2",
+            "title": "Prompt Engineering Systems",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Structured prompts",
+              "Few-shot patterns",
+              "Prompt testing loops"
+            ]
+          },
+          {
+            "id": "ai-automation-week-1-topic-3",
+            "title": "Automation Stack Setup",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Tools and APIs",
+              "Environment setup",
+              "First mini automation"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Workflow Design and Integrations",
+        "summary": "Build robust automation flows with external APIs and data movement.",
+        "topics": [
+          {
+            "id": "ai-automation-week-2-topic-1",
+            "title": "Workflow Mapping",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Inputs and outputs",
+              "Branching logic",
+              "Failure paths"
+            ]
+          },
+          {
+            "id": "ai-automation-week-2-topic-2",
+            "title": "API Integrations",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "REST basics",
+              "Authentication",
+              "Retries and timeouts"
+            ]
+          },
+          {
+            "id": "ai-automation-week-2-topic-3",
+            "title": "Data Pipelines",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Data cleaning",
+              "Transform rules",
+              "Storage patterns"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "LLM Retrieval and Context",
+        "summary": "Add memory and retrieval to make AI automations context aware.",
+        "topics": [
+          {
+            "id": "ai-automation-week-3-topic-1",
+            "title": "Retrieval Fundamentals",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Embeddings basics",
+              "Chunking",
+              "Relevance ranking"
+            ]
+          },
+          {
+            "id": "ai-automation-week-3-topic-2",
+            "title": "Context Windows and Memory",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Session memory",
+              "Long-term memory",
+              "Token budgeting"
+            ]
+          },
+          {
+            "id": "ai-automation-week-3-topic-3",
+            "title": "RAG in Production",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Grounded responses",
+              "Evaluation",
+              "Fallback behavior"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Tool-Using Agents",
+        "summary": "Teach agents to execute tools safely and reliably.",
+        "topics": [
+          {
+            "id": "ai-automation-week-4-topic-1",
+            "title": "Tool Invocation Patterns",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Function calling",
+              "Tool schemas",
+              "Validation guards"
+            ]
+          },
+          {
+            "id": "ai-automation-week-4-topic-2",
+            "title": "Autonomous Decision Loops",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Plan-act-observe",
+              "Loop controls",
+              "Human handoff"
+            ]
+          },
+          {
+            "id": "ai-automation-week-4-topic-3",
+            "title": "Error Recovery Strategies",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Retry policies",
+              "Dead-letter queues",
+              "Incident logging"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Shipping Automation Products",
+        "summary": "Prepare your automation for production deployment and monitoring.",
+        "topics": [
+          {
+            "id": "ai-automation-week-5-topic-1",
+            "title": "Observability and Alerts",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Metrics",
+              "Logs and traces",
+              "Alert thresholds"
+            ]
+          },
+          {
+            "id": "ai-automation-week-5-topic-2",
+            "title": "Security and Permissions",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Secrets handling",
+              "Role access",
+              "Safe execution"
+            ]
+          },
+          {
+            "id": "ai-automation-week-5-topic-3",
+            "title": "Deployment Workflows",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Environments",
+              "Release strategy",
+              "Rollback plan"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Capstone Build and Demo",
+        "summary": "Design and launch a complete AI automation capstone.",
+        "topics": [
+          {
+            "id": "ai-automation-week-6-topic-1",
+            "title": "Capstone Planning",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Problem selection",
+              "Scope control",
+              "Success criteria"
+            ]
+          },
+          {
+            "id": "ai-automation-week-6-topic-2",
+            "title": "Implementation Sprint",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Execution cadence",
+              "Testing checklist",
+              "Polish"
+            ]
+          },
+          {
+            "id": "ai-automation-week-6-topic-3",
+            "title": "Demo and Review",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Narrative demo",
+              "KPIs",
+              "Iteration roadmap"
             ]
           }
         ]
       }
     ],
-    "videos": []
+    "cohorts": [
+      "Mar"
+    ],
+    "cohortLiveVideos": {
+      "Mar": {
+        "week-1": {
+          "__general__": [
+            "6_2KzTz7uek&list=RD6_2KzTz7uek&start_radio=1"
+          ],
+          "ai-automation-week-1-topic-1": [
+            "6_2KzTz7uek&list=RD6_2KzTz7uek&start_radio=1"
+          ]
+        }
+      }
+    }
   },
   {
     "slug": "vibe-coding",
@@ -30,18 +246,224 @@
     "weeksDetail": [
       {
         "title": "Vibe Fundamentals",
-        "summary": "Language of aesthetics, motion, and rhythm.",
+        "summary": "Learn the language of visual rhythm, interaction, and aesthetic consistency.",
         "topics": [
           {
             "id": "vibe-coding-week-1-topic-1",
             "title": "Aesthetic Coding Principles",
-            "bullets": [
-              "What makes interfaces feel alive",
-              "Balancing minimalism with expressiveness"
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Visual hierarchy",
+              "Color rhythm",
+              "Typography vibe"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-1-topic-2",
+            "title": "Design Tokens in Practice",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Token systems",
+              "Theme consistency",
+              "Dark/light balance"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-1-topic-3",
+            "title": "Motion Foundations",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Timing curves",
+              "Micro-animations",
+              "Intentional transitions"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Creative UI Systems",
+        "summary": "Build reusable components that keep your vibe coherent at scale.",
+        "topics": [
+          {
+            "id": "vibe-coding-week-2-topic-1",
+            "title": "Component Composition",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Layout primitives",
+              "Composable patterns",
+              "Design contracts"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-2-topic-2",
+            "title": "Interaction Patterns",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Hover states",
+              "Focus/active UX",
+              "Feedback loops"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-2-topic-3",
+            "title": "Responsive Vibe Strategy",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Breakpoint design",
+              "Fluid spacing",
+              "Mobile polish"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Generative Visuals",
+        "summary": "Create expressive visuals and dynamic sections that still feel usable.",
+        "topics": [
+          {
+            "id": "vibe-coding-week-3-topic-1",
+            "title": "Canvas and SVG Patterns",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Shape systems",
+              "Parametric styles",
+              "Animation loops"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-3-topic-2",
+            "title": "Data-Driven Visual States",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "UI state mapping",
+              "Visual feedback",
+              "Progress narratives"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-3-topic-3",
+            "title": "Performance for Visual UI",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Render cost",
+              "Asset strategy",
+              "Frame consistency"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Interactive Experiences",
+        "summary": "Design playful interfaces with meaningful interactions and flow.",
+        "topics": [
+          {
+            "id": "vibe-coding-week-4-topic-1",
+            "title": "Input-Driven Interactions",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Pointer events",
+              "Gestures",
+              "Interactive states"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-4-topic-2",
+            "title": "Narrative UI Sequences",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Step flows",
+              "Transitions",
+              "Context carry-over"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-4-topic-3",
+            "title": "Accessibility with Style",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Contrast checks",
+              "Keyboard support",
+              "Semantic structure"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "AI-Assisted Creative Workflows",
+        "summary": "Use AI to accelerate ideation, component generation, and refinement.",
+        "topics": [
+          {
+            "id": "vibe-coding-week-5-topic-1",
+            "title": "Prompting for UI Ideas",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Style prompts",
+              "Iteration prompts",
+              "Constraint prompts"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-5-topic-2",
+            "title": "Rapid Prototyping Loops",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Prototype cadence",
+              "Feedback cycles",
+              "Refinement"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-5-topic-3",
+            "title": "Quality Control Systems",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Visual QA",
+              "Interaction QA",
+              "Consistency checks"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Vibe Capstone",
+        "summary": "Ship a polished creative experience with a strong design narrative.",
+        "topics": [
+          {
+            "id": "vibe-coding-week-6-topic-1",
+            "title": "Capstone Concept Design",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Concept framing",
+              "Moodboarding",
+              "Success metrics"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-6-topic-2",
+            "title": "Build and Polish",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Execution plan",
+              "Final polish",
+              "Bug fixing"
+            ]
+          },
+          {
+            "id": "vibe-coding-week-6-topic-3",
+            "title": "Showcase and Review",
+            "videoId": "dQw4w9WgXcQ",
+            "subtopics": [
+              "Presentation flow",
+              "Review checklist",
+              "Next iteration"
             ]
           }
         ]
       }
+    ],
+    "cohorts": [
+      "apr",
+      "mar"
     ]
   },
   {
@@ -57,35 +479,94 @@
           {
             "id": "n8n-week-1-topic-1",
             "title": "n8n Basics",
-            "bullets": [
-              "What n8n is and when to use it",
-              "Nodes, workflows, and triggers"
+            "videoId": "1y6smkh6c-0",
+            "subtopics": [
+              "Nodes, workflows, and triggers",
+              "Execution mode",
+              "First flow"
+            ]
+          },
+          {
+            "id": "n8n-week-1-topic-2",
+            "title": "Webhooks and Triggers",
+            "videoId": "1y6smkh6c-0",
+            "subtopics": [
+              "Incoming data",
+              "Trigger events",
+              "Validation"
+            ]
+          },
+          {
+            "id": "n8n-week-1-topic-3",
+            "title": "Data Transformation",
+            "videoId": "1y6smkh6c-0",
+            "subtopics": [
+              "Set node",
+              "Code node",
+              "Merge node"
             ]
           }
         ]
       },
       {
-        "title": "Week 2",
-        "summary": "something",
+        "title": "Practical Integrations",
+        "summary": "Connect real products and automate repeated work.",
         "topics": [
           {
             "id": "n8n-week-2-topic-1",
-            "title": "hhhhh"
+            "title": "CRM + Sheets Automation",
+            "videoId": "1y6smkh6c-0",
+            "subtopics": [
+              "Data sync",
+              "Deduping",
+              "Error handling"
+            ]
+          },
+          {
+            "id": "n8n-week-2-topic-2",
+            "title": "Slack Notification Flows",
+            "videoId": "1y6smkh6c-0",
+            "subtopics": [
+              "Formatting messages",
+              "Conditional alerts",
+              "Rate limits"
+            ]
+          },
+          {
+            "id": "n8n-week-2-topic-3",
+            "title": "Weekly Reporting Pipeline",
+            "videoId": "1y6smkh6c-0",
+            "subtopics": [
+              "Aggregation",
+              "Delivery schedule",
+              "Monitoring"
+            ]
           }
         ]
       }
     ],
-    "videos": [
-      {
-        "week": 1,
-        "title": "ai-automation",
-        "youtubeId": "1y6smkh6c-0"
+    "cohorts": [
+      "mar",
+      "n8n-automation-march2026"
+    ],
+    "cohortLiveVideos": {
+      "mar": {
+        "week-1": {
+          "n8n-week-1-topic-1": [
+            "6_2KzTz7uek&list=RD6_2KzTz7uek&start_radio=1"
+          ]
+        }
       },
-      {
-        "week": 2,
-        "title": "ai-automation week 2",
-        "youtubeId": "1y6smkh6c-0"
+      "n8n-automation-march2026": {
+        "week-1": {
+          "n8n-week-1-topic-1": [
+            "6_2KzTz7uek&list=RD6_2KzTz7uek&start_radio=1"
+          ],
+          "n8n-week-1-topic-2": [
+            "6_2KzTz7uek?si=UPNks8Hti-Y89vor"
+          ]
+        }
       }
-    ]
+    }
   }
 ]
