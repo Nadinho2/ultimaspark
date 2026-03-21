@@ -1,4 +1,5 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { userHasAdminRole } from "@/lib/admin-role";
 import { redirect } from "next/navigation";
 import { differenceInCalendarDays } from "date-fns";
 import { Progress, ProgressIndicator } from "@/components/ui/progress";
@@ -77,8 +78,7 @@ export default async function DashboardPage() {
   const claimedCertificates =
     (user.publicMetadata.claimedCertificates as string[] | undefined) ?? [];
 
-  const role = (user.publicMetadata.role as string | undefined) ?? null;
-  const isAdmin = role === "admin";
+  const isAdmin = userHasAdminRole(user);
 
   const allCourses = await getCourses();
 

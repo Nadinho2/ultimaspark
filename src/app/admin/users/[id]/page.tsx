@@ -1,5 +1,6 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { userHasAdminRole } from "@/lib/admin-role";
 
 type Params = {
   id: string;
@@ -17,11 +18,7 @@ export default async function AdminUserDetailsPage(props: {
 
   const client = await clerkClient();
   const me = await client.users.getUser(userId);
-  const role =
-    (me.publicMetadata.role as string | undefined) ??
-    ((me.unsafeMetadata as any)?.role as string | undefined) ??
-    null;
-  if (String(role ?? "").toLowerCase().trim() !== "admin") {
+  if (!userHasAdminRole(me)) {
     redirect("/dashboard");
   }
 

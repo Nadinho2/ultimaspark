@@ -85,10 +85,23 @@ export function CoursesSection() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const data = await adminListCourses();
-      if (!cancelled) {
-        setCourses(data);
-        setLoading(false);
+      setActionError(null);
+      try {
+        const data = await adminListCourses();
+        if (!cancelled) {
+          setCourses(data);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setCourses([]);
+          setActionError(
+            e instanceof Error
+              ? e.message
+              : "Could not load courses (check admin permission).",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {

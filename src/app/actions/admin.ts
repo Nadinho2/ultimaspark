@@ -11,6 +11,7 @@ import {
   writeCourses,
   persistErrorMessage,
 } from "@/lib/course-store";
+import { ADMIN_ROLE_HELP, userHasAdminRole } from "@/lib/admin-role";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -19,12 +20,6 @@ type AdminResult =
   | { success: true; message?: string }
   | { success: false; error: string };
 
-function ensureAdminRole(role: unknown): role is "admin" {
-  if (!role) return false;
-  const s = String(role).toLowerCase().trim();
-  return s === "admin";
-}
-
 async function requireAdmin() {
   const { userId } = await auth();
   if (!userId) {
@@ -32,10 +27,8 @@ async function requireAdmin() {
   }
   const client = await clerkClient();
   const me = await client.users.getUser(userId);
-  const role =
-    me.publicMetadata.role ?? (me.unsafeMetadata as any)?.role ?? null;
-  if (!ensureAdminRole(role)) {
-    throw new Error("Not authorized");
+  if (!userHasAdminRole(me)) {
+    throw new Error(`Not authorized. ${ADMIN_ROLE_HELP}`);
   }
   return { client };
 }

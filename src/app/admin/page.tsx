@@ -1,5 +1,6 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { userHasAdminRole } from "@/lib/admin-role";
 import Link from "next/link";
 import {
   Card,
@@ -22,13 +23,7 @@ export default async function AdminPage() {
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
 
-  const rawRole =
-    (user.publicMetadata.role as string | undefined) ??
-    (user.unsafeMetadata?.role as string | undefined) ??
-    null;
-  const role = rawRole ? String(rawRole).toLowerCase().trim() : null;
-
-  if (role !== "admin") {
+  if (!userHasAdminRole(user)) {
     redirect("/dashboard");
   }
 

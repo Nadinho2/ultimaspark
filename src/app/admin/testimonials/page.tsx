@@ -1,5 +1,6 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { userHasAdminRole } from "@/lib/admin-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Testimonial } from "@/lib/supabase/types";
 import { TestimonialsModeration } from "@/components/admin/TestimonialsModeration";
@@ -13,9 +14,11 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminTestimonialsPage() {
-  const user = await currentUser();
-  const role = (user?.publicMetadata?.role as string | undefined) ?? null;
-  if (String(role ?? "").toLowerCase().trim() !== "admin") {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  if (!userHasAdminRole(user)) {
     redirect("/dashboard");
   }
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { ADMIN_ROLE_HELP, userHasAdminRole } from "@/lib/admin-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -14,12 +15,9 @@ async function requireAdmin() {
 
   const client = await clerkClient();
   const me = await client.users.getUser(userId);
-  const role =
-    (me.publicMetadata.role as string | undefined) ??
-    ((me.unsafeMetadata as any)?.role as string | undefined) ??
-    null;
-  const normalized = role ? String(role).toLowerCase().trim() : null;
-  if (normalized !== "admin") throw new Error("Not authorized");
+  if (!userHasAdminRole(me)) {
+    throw new Error(`Not authorized. ${ADMIN_ROLE_HELP}`);
+  }
 }
 
 export async function approveTestimonial(formData: FormData): Promise<ActionResult> {

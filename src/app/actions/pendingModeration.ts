@@ -1,6 +1,7 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { userHasAdminRole } from "@/lib/admin-role";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import WelcomeOnApproval from "@/emails/WelcomeOnApproval";
@@ -27,8 +28,7 @@ export async function listPendingEnrollments(): Promise<PendingRow[]> {
 
   const client = await clerkClient();
   const me = await client.users.getUser(userId);
-  const role = (me.publicMetadata.role as string | undefined) ?? null;
-  if (role !== "admin") return [];
+  if (!userHasAdminRole(me)) return [];
 
   const list = await client.users.getUserList({});
   const users = list.data ?? [];
@@ -88,8 +88,7 @@ export async function approveEnrollment(
 
   const client = await clerkClient();
   const me = await client.users.getUser(userId);
-  const role = (me.publicMetadata.role as string | undefined) ?? null;
-  if (role !== "admin") return { success: false, error: "Not authorized" };
+  if (!userHasAdminRole(me)) return { success: false, error: "Not authorized" };
 
   const user = await client.users.getUser(targetUserId);
 
@@ -185,8 +184,7 @@ export async function rejectEnrollment(
 
   const client = await clerkClient();
   const me = await client.users.getUser(userId);
-  const role = (me.publicMetadata.role as string | undefined) ?? null;
-  if (role !== "admin") return { success: false, error: "Not authorized" };
+  if (!userHasAdminRole(me)) return { success: false, error: "Not authorized" };
 
   const user = await client.users.getUser(targetUserId);
 
