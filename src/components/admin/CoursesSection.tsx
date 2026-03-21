@@ -43,23 +43,27 @@ function flattenTopicsForNotes(course: AdminCourseRow) {
 export function CoursesSection() {
   const [courses, setCourses] = useState<AdminCourseRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  /** Which single admin action is in flight (avoids global `saving` dimming every button at once). */
+  const [mutationKey, setMutationKey] = useState<string | null>(null);
 
-  const runMutation = useCallback(async (fn: () => Promise<void>) => {
-    setSaving(true);
-    setActionError(null);
-    try {
-      await fn();
-    } catch (e) {
-      setActionError(
-        e instanceof Error
-          ? e.message
-          : "Request failed. Check the browser console and try again.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+  const runMutation = useCallback(
+    async (key: string, fn: () => Promise<void>) => {
+      setMutationKey(key);
+      setActionError(null);
+      try {
+        await fn();
+      } catch (e) {
+        setActionError(
+          e instanceof Error
+            ? e.message
+            : "Request failed. Check the browser console and try again.",
+        );
+      } finally {
+        setMutationKey(null);
+      }
+    },
+    [],
+  );
   /** Row index being edited (stable when slug field changes in the form) */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   /** Course slug when Edit was opened — sent as originalSlug to the server */
@@ -148,7 +152,7 @@ export function CoursesSection() {
   }, []);
 
   const handleCreate = () => {
-    void runMutation(async () => {
+    void runMutation("create-course", async () => {
       const fd = new FormData();
       fd.append("title", newCourse.title);
       if (newCourse.slug) fd.append("slug", newCourse.slug);
@@ -175,7 +179,7 @@ export function CoursesSection() {
     if (editingIndex === null || editingOriginalSlug === null) return;
     const row = courses[editingIndex];
     if (!row) return;
-    void runMutation(async () => {
+    void runMutation(`save-${editingOriginalSlug}`, async () => {
       const fd = new FormData();
       fd.append("originalSlug", editingOriginalSlug);
       fd.append("title", row.title);
@@ -202,7 +206,7 @@ export function CoursesSection() {
     );
     if (!confirmDelete) return;
 
-    void runMutation(async () => {
+    void runMutation(`delete-${slug}`, async () => {
       const result = await deleteCourse(slug);
       if (!result.success) {
         setActionError(result.error ?? "Could not delete course.");
@@ -235,7 +239,7 @@ export function CoursesSection() {
           {actionError}
         </div>
       )}
-      {saving && (
+      {mutationKey && (
         <p className="text-xs font-medium text-primary" aria-live="polite">
           Saving…
         </p>
@@ -300,7 +304,9 @@ export function CoursesSection() {
             type="button"
             size="sm"
             className="bg-spark text-bg hover:bg-spark/90"
-            disabled={saving || !newCourse.title.trim()}
+            disabled={
+              mutationKey === "create-course" || !newCourse.title.trim()
+            }
             onClick={handleCreate}
           >
             Create Course
@@ -393,7 +399,6 @@ export function CoursesSection() {
                                 topicId={topic.id}
                                 topicTitle={topic.title}
                                 initialVideoId={topic.videoId}
-                                isBusy={saving}
                                 onError={setActionError}
                                 onSaved={async () => {
                                   const refreshed = await adminListCourses();
@@ -480,9 +485,13 @@ export function CoursesSection() {
                           type="button"
                           size="xs"
                           className="bg-spark text-bg hover:bg-spark/90"
-                          disabled={saving || !newVideo.youtubeId || !newVideo.topicId}
+                          disabled={
+                            mutationKey === `addVideo-${c.slug}` ||
+                            !newVideo.youtubeId ||
+                            !newVideo.topicId
+                          }
                           onClick={() =>
-                            void runMutation(async () => {
+                            void runMutation(`addVideo-${c.slug}`, async () => {
                               const fd = new FormData();
                               fd.append("slug", c.slug);
                               fd.append("week", String(newVideo.week));
@@ -656,9 +665,9 @@ export function CoursesSection() {
                           type="button"
                           size="xs"
                           className="bg-spark text-bg hover:bg-spark/90"
-                          disabled={saving}
+                          disabled={mutationKey === `curriculum-${c.slug}`}
                           onClick={() =>
-                            void runMutation(async () => {
+                            void runMutation(`curriculum-${c.slug}`, async () => {
                               const weeksDetail =
                                 ((c as any).weeksDetail as any[]) ?? [];
                               const fd = new FormData();
@@ -731,9 +740,9 @@ export function CoursesSection() {
                             type="button"
                             size="xs"
                             className="bg-growth text-bg hover:bg-growth/90"
-                            disabled={saving}
+                            disabled={mutationKey === `instructor-${c.slug}`}
                             onClick={() =>
-                              void runMutation(async () => {
+                              void runMutation(`instructor-${c.slug}`, async () => {
                                 setActionError(null);
                                 const fd = new FormData();
                                 fd.append("slug", c.slug);
@@ -785,7 +794,11 @@ export function CoursesSection() {
                     type="button"
                     size="sm"
                     className="bg-spark text-bg hover:bg-spark/90"
-                    disabled={saving}
+                    disabled={
+                      editingOriginalSlug
+                        ? mutationKey === `save-${editingOriginalSlug}`
+                        : false
+                    }
                     onClick={handleUpdate}
                   >
                     Save
@@ -795,7 +808,7 @@ export function CoursesSection() {
                     type="button"
                     size="sm"
                     variant="destructive"
-                    disabled={saving}
+                    disabled={mutationKey === `delete-${c.slug}`}
                     onClick={() => handleDelete(c.slug)}
                   >
                     Delete
@@ -991,9 +1004,15 @@ export function CoursesSection() {
                                             type="button"
                                             size="xs"
                                             variant="outline"
-                                            disabled={saving || !editValue.trim()}
+                                            disabled={
+                                              mutationKey ===
+                                                `liveCohortSave-${editKey}` ||
+                                              !editValue.trim()
+                                            }
                                             onClick={() =>
-                                              void runMutation(async () => {
+                                              void runMutation(
+                                                `liveCohortSave-${editKey}`,
+                                                async () => {
                                                 const fd = new FormData();
                                                 fd.append("courseSlug", c.slug);
                                                 fd.append("cohortId", newLiveVideo.cohortId);
@@ -1012,7 +1031,8 @@ export function CoursesSection() {
                                                       "Could not update cohort video.",
                                                   );
                                                 }
-                                              })
+                                              },
+                                              )
                                             }
                                           >
                                             Save
@@ -1021,9 +1041,14 @@ export function CoursesSection() {
                                             type="button"
                                             size="xs"
                                             variant="destructive"
-                                            disabled={saving}
+                                            disabled={
+                                              mutationKey ===
+                                                `liveCohortDelete-${editKey}`
+                                            }
                                             onClick={() =>
-                                              void runMutation(async () => {
+                                              void runMutation(
+                                                `liveCohortDelete-${editKey}`,
+                                                async () => {
                                                 const fd = new FormData();
                                                 fd.append("courseSlug", c.slug);
                                                 fd.append("cohortId", newLiveVideo.cohortId);
@@ -1041,7 +1066,8 @@ export function CoursesSection() {
                                                       "Could not delete cohort video.",
                                                   );
                                                 }
-                                              })
+                                              },
+                                              )
                                             }
                                           >
                                             Delete
@@ -1071,9 +1097,12 @@ export function CoursesSection() {
                         size="xs"
                         variant="outline"
                         className="border-spark/50 text-spark hover:bg-spark/10"
-                        disabled={saving || !newCohortId.trim()}
+                        disabled={
+                          mutationKey === `cohortCreate-${c.slug}` ||
+                          !newCohortId.trim()
+                        }
                         onClick={() =>
-                          void runMutation(async () => {
+                          void runMutation(`cohortCreate-${c.slug}`, async () => {
                             const fd = new FormData();
                             fd.append("courseSlug", c.slug);
                             fd.append("cohortId", newCohortId.trim());
@@ -1104,13 +1133,13 @@ export function CoursesSection() {
                       size="xs"
                       className="bg-spark text-bg hover:bg-spark/90"
                       disabled={
-                        saving ||
+                        mutationKey === `liveSession-${c.slug}` ||
                         !newLiveVideo.youtubeId ||
                         !newLiveVideo.cohortId ||
                         !newLiveVideo.topicId
                       }
                       onClick={() =>
-                        void runMutation(async () => {
+                        void runMutation(`liveSession-${c.slug}`, async () => {
                           const fd = new FormData();
                           fd.append("courseSlug", c.slug);
                           fd.append("cohortId", newLiveVideo.cohortId);
@@ -1156,7 +1185,6 @@ function TopicVideoAdminRow({
   topicId,
   topicTitle,
   initialVideoId,
-  isBusy,
   onError,
   onSaved,
 }: {
@@ -1164,7 +1192,6 @@ function TopicVideoAdminRow({
   topicId: string;
   topicTitle: string;
   initialVideoId?: string;
-  isBusy: boolean;
   onError: (msg: string | null) => void;
   onSaved: () => Promise<void>;
 }) {
@@ -1212,7 +1239,7 @@ function TopicVideoAdminRow({
           type="button"
           size="xs"
           className="bg-spark text-bg hover:bg-spark/90"
-          disabled={isBusy || rowSaving}
+          disabled={rowSaving}
           onClick={() => run(false)}
         >
           Save video
@@ -1222,7 +1249,7 @@ function TopicVideoAdminRow({
           size="xs"
           variant="outline"
           className="border-secondary/60 text-secondary hover:bg-secondary/10"
-          disabled={isBusy || rowSaving || !initialVideoId}
+          disabled={rowSaving || !initialVideoId}
           onClick={() => run(true)}
         >
           Clear video
