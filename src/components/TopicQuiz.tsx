@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { submitTopicQuiz } from "@/app/actions/quiz";
-import type { TopicQuizMCQ } from "@/lib/topic-quiz";
+import type { TopicQuizMCQ } from "@/lib/topic-quiz-shared";
 
 type Props = {
   courseSlug: string;

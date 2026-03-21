@@ -22,7 +22,10 @@ import {
 import { TopicCompleteButton } from "@/components/TopicCompleteButton";
 import { TopicQuiz } from "@/components/TopicQuiz";
 import { TopicNotes } from "@/components/TopicNotes";
-import { resolveTopicQuizContent, topicQuizStorageKey } from "@/lib/topic-quiz";
+import {
+  resolveTopicQuizContent,
+  topicQuizStorageKey,
+} from "@/lib/topic-quiz-shared";
 import {
   topicNoteKey,
   topicVideoNoteKey,

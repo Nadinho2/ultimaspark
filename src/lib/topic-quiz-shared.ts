@@ -1,49 +1,24 @@
-import { promises as fs } from "fs";
-import path from "path";
-import { getCourses } from "@/lib/courses";
-import type { CourseTopic } from "@/lib/courses";
-
+/**
+ * Client-safe topic quiz helpers (no Node fs). Server grading uses `topic-quiz-server.ts`.
+ * Intentionally does not import `@/lib/courses` (that pulls `course-store` / `fs` into the client bundle).
+ */
 export type TopicQuizMCQ = {
   question: string;
   options: { value: string; label: string }[];
 };
 
-/** Optional overrides: topic id → correct option value (a–d). Default is "a". */
-async function loadAnswerOverrides(): Promise<Record<string, string>> {
-  try {
-    const file = path.join(process.cwd(), "data", "topic-quiz-overrides.json");
-    const raw = await fs.readFile(file, "utf8");
-    return JSON.parse(raw) as Record<string, string>;
-  } catch {
-    return {};
-  }
-}
-
-/**
- * Correct answer for a topic: course-stored quiz → JSON overrides → "a".
- */
-export async function getCorrectAnswerForTopic(
-  topicId: string,
-  courseSlug: string,
-): Promise<string> {
-  const courses = await getCourses();
-  const course = courses.find((c) => c.slug === courseSlug);
-  for (const w of course?.weeksDetail ?? []) {
-    const t = w.topics?.find((x) => x.id === topicId);
-    const ca = t?.topicQuiz?.correctAnswer;
-    if (ca && /^[a-d]$/i.test(String(ca))) {
-      return String(ca).toLowerCase();
-    }
-  }
-
-  const overrides = await loadAnswerOverrides();
-  const v = overrides[topicId];
-  if (v && /^[a-d]$/i.test(v)) return v.toLowerCase();
-  return "a";
-}
+/** Shape needed for `resolveTopicQuizContent` (matches `CourseTopic` fields used). */
+export type TopicQuizContentInput = {
+  title: string;
+  topicQuiz?: {
+    question: string;
+    options: { value: string; label: string }[];
+    correctAnswer: string;
+  };
+};
 
 /** Learner-facing quiz copy: custom per topic or shared default template. */
-export function resolveTopicQuizContent(topic: Pick<CourseTopic, "title" | "topicQuiz">): TopicQuizMCQ {
+export function resolveTopicQuizContent(topic: TopicQuizContentInput): TopicQuizMCQ {
   const q = topic.topicQuiz;
   if (
     q &&

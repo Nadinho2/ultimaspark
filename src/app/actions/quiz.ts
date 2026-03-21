@@ -3,10 +3,8 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { sendCongratsEmail } from "@/app/actions/sendNotification";
 import { getCourses } from "@/lib/courses";
-import {
-  getCorrectAnswerForTopic,
-  topicQuizStorageKey,
-} from "@/lib/topic-quiz";
+import { topicQuizStorageKey } from "@/lib/topic-quiz-shared";
+import { getCorrectAnswerForTopic } from "@/lib/topic-quiz-server";
 
 type QuizResult =
   | { success: true; passed: boolean; score: number }

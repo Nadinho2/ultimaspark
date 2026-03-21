@@ -21,7 +21,7 @@ import {
   updateTopicInstructorNotes,
 } from "@/app/actions/admin";
 import type { TopicQuizConfig } from "@/lib/courses";
-import { resolveTopicQuizContent } from "@/lib/topic-quiz";
+import { resolveTopicQuizContent } from "@/lib/topic-quiz-shared";
 import { Select } from "@/components/ui/select";
 
 type AdminCourseRow = Awaited<ReturnType<typeof adminListCourses>>[number];
