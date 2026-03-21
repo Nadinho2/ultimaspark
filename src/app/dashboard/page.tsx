@@ -22,7 +22,7 @@ import {
 import { TopicCompleteButton } from "@/components/TopicCompleteButton";
 import { TopicQuiz } from "@/components/TopicQuiz";
 import { TopicNotes } from "@/components/TopicNotes";
-import { buildTopicQuizContent, topicQuizStorageKey } from "@/lib/topic-quiz";
+import { resolveTopicQuizContent, topicQuizStorageKey } from "@/lib/topic-quiz";
 import {
   topicNoteKey,
   topicVideoNoteKey,
@@ -326,8 +326,8 @@ export default async function DashboardPage() {
                                           <TopicQuiz
                                             courseSlug={course.slug}
                                             topicId={topic.id}
-                                            content={buildTopicQuizContent(
-                                              topic.title,
+                                            content={resolveTopicQuizContent(
+                                              topic,
                                             )}
                                             passed={
                                               courseProgress?.quizzes?.[
@@ -524,8 +524,8 @@ export default async function DashboardPage() {
                                                   <TopicQuiz
                                                     courseSlug={course.slug}
                                                     topicId={topic.id}
-                                                    content={buildTopicQuizContent(
-                                                      topic.title,
+                                                    content={resolveTopicQuizContent(
+                                                      topic,
                                                     )}
                                                     passed={
                                                       courseProgress?.quizzes?.[

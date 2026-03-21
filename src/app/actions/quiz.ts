@@ -153,7 +153,9 @@ export async function submitTopicQuiz(
     return { success: false, error: "Missing data" };
   }
 
-  const correct = (await getCorrectAnswerForTopic(topicId)).toLowerCase();
+  const correct = (
+    await getCorrectAnswerForTopic(topicId, courseSlug)
+  ).toLowerCase();
   const passed = answer === correct;
   const score = passed ? 100 : 0;
 

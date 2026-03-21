@@ -5,7 +5,12 @@ import { Resend } from "resend";
 import { render } from "@react-email/render";
 import NewVideoAdded from "@/emails/NewVideoAdded";
 import * as React from "react";
-import { extractYouTubeId, type Course, type CourseWeek } from "@/lib/courses";
+import {
+  extractYouTubeId,
+  type Course,
+  type CourseWeek,
+  type TopicQuizConfig,
+} from "@/lib/courses";
 import {
   readCourses,
   writeCourses,
@@ -31,7 +36,117 @@ async function requireAdmin() {
   if (!userHasAdminRole(me)) {
     throw new Error(`Not authorized. ${ADMIN_ROLE_HELP}`);
   }
-  return { client };
+  return { client, userId };
+}
+
+function findWeekNumberForTopic(course: Course, topicId: string): number {
+  const weeks = course.weeksDetail ?? [];
+  for (let i = 0; i < weeks.length; i += 1) {
+    if ((weeks[i].topics ?? []).some((t) => t.id === topicId)) {
+      return i + 1;
+    }
+  }
+  return 1;
+}
+
+/** Notify learners (or admin/test in opt-out mode) when a lesson video is published. */
+async function notifyEnrolledNewLessonVideo(opts: {
+  client: Awaited<ReturnType<typeof clerkClient>>;
+  adminUserId: string | null;
+  courseSlug: string;
+  courseTitle: string;
+  week: number;
+  youtubeId: string;
+  topicId?: string | null;
+  videoTitleFallback?: string;
+}): Promise<void> {
+  if (!resend) return;
+
+  const videoLink = `https://youtube.com/watch?v=${encodeURIComponent(
+    opts.youtubeId,
+  )}`;
+  const videoTitle =
+    opts.topicId != null
+      ? `New lesson video (${opts.topicId})`
+      : (opts.videoTitleFallback ?? `Week ${opts.week}`);
+
+  // Default: email all enrolled learners. Set SEND_VIDEO_EMAILS_TO_ALL=false for admin/test-only.
+  const sendToAll = process.env.SEND_VIDEO_EMAILS_TO_ALL !== "false";
+  const testEmail = process.env.VIDEO_EMAIL_TEST_TO?.trim() ?? null;
+
+  try {
+    if (!sendToAll) {
+      const adminUser = opts.adminUserId
+        ? await opts.client.users.getUser(opts.adminUserId)
+        : null;
+      const toEmail =
+        testEmail ??
+        adminUser?.emailAddresses?.[0]?.emailAddress ??
+        adminUser?.primaryEmailAddress?.emailAddress ??
+        null;
+      const displayName =
+        adminUser?.firstName ?? adminUser?.username ?? "Team";
+      if (!toEmail) {
+        console.warn(
+          "[new video email] No recipient: set VIDEO_EMAIL_TEST_TO, ensure admin has an email, or leave SEND_VIDEO_EMAILS_TO_ALL unset (defaults to notifying enrolled learners).",
+        );
+        return;
+      }
+      const html = await render(
+        React.createElement(NewVideoAdded, {
+          name: displayName,
+          course: opts.courseTitle,
+          week: opts.week,
+          videoTitle,
+          videoLink,
+        }),
+      );
+      await resend.emails.send({
+        from: "UltimaSpark Academy <noreply@ultimaspark.com>",
+        to: toEmail,
+        subject: `New video in Week ${opts.week} of ${opts.courseTitle}`,
+        html,
+      });
+      return;
+    }
+
+    const users = await listAllClerkUsers(opts.client);
+    for (const u of users) {
+      const enrolled =
+        (u.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
+      if (!enrolled.includes(opts.courseSlug)) continue;
+      const toEmail =
+        u.emailAddresses?.[0]?.emailAddress ??
+        u.primaryEmailAddress?.emailAddress ??
+        null;
+      if (!toEmail) continue;
+      const displayName = u.firstName ?? u.username ?? "Student";
+      const html = await render(
+        React.createElement(NewVideoAdded, {
+          name: displayName,
+          course: opts.courseTitle,
+          week: opts.week,
+          videoTitle,
+          videoLink,
+        }),
+      );
+      try {
+        await resend.emails.send({
+          from: "UltimaSpark Academy <noreply@ultimaspark.com>",
+          to: toEmail,
+          subject: `New video in Week ${opts.week} of ${opts.courseTitle}`,
+          html,
+        });
+      } catch (err) {
+        console.error(
+          `notifyEnrolledNewLessonVideo failed for user ${u.id}:`,
+          err,
+        );
+      }
+    }
+  } catch (err) {
+    console.error("notifyEnrolledNewLessonVideo error:", err);
+  }
 }
 
 export async function adminListUsers() {
@@ -353,8 +468,7 @@ export async function deleteCourse(slug: string): Promise<AdminResult> {
 
 export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
   try {
-    const { userId: adminUserId } = await auth();
-    const { client } = await requireAdmin();
+    const { client, userId: adminUserId } = await requireAdmin();
     const slug = (formData.get("slug") as string | null)?.trim();
     const topicId = (formData.get("topicId") as string | null)?.trim();
     const weekStr = (formData.get("week") as string | null) ?? "1";
@@ -404,92 +518,16 @@ export async function addCourseVideo(formData: FormData): Promise<AdminResult> {
     }
     await writeCourses(courses);
 
-    // Best-effort email notification to enrolled learners.
-    try {
-      if (resend) {
-        const videoLink = `https://youtube.com/watch?v=${encodeURIComponent(
-          youtubeId,
-        )}`;
-
-        const sendToAll = process.env.SEND_VIDEO_EMAILS_TO_ALL === "true";
-        const testEmail = process.env.VIDEO_EMAIL_TEST_TO?.trim() ?? null;
-
-        // MVP mode: send to test email if set; otherwise only to the admin who triggered the change.
-        if (!sendToAll) {
-          const adminUser = adminUserId
-            ? await client.users.getUser(adminUserId)
-            : null;
-
-          const toEmail =
-            testEmail ??
-            adminUser?.emailAddresses?.[0]?.emailAddress ??
-            adminUser?.primaryEmailAddress?.emailAddress ??
-            null;
-          const displayName =
-            adminUser?.firstName ?? adminUser?.username ?? "Student";
-
-          if (toEmail) {
-            const html = await render(
-              React.createElement(NewVideoAdded, {
-                name: displayName,
-                course: course.title,
-                week,
-                videoTitle: topicId ? `New lesson video (${topicId})` : title,
-                videoLink: videoLink,
-              }),
-            );
-            await resend.emails.send({
-              from: "UltimaSpark Academy <noreply@ultimaspark.com>",
-              to: toEmail,
-              subject: `New video in Week ${week} of ${course.title}`,
-              html,
-            });
-          }
-        } else {
-          // Full mode: send to all enrolled learners for this course.
-          const users = await listAllClerkUsers(client);
-
-          for (const u of users) {
-            const enrolled =
-              (u.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
-            if (!enrolled.includes(slug)) continue;
-
-            const toEmail =
-              u.emailAddresses?.[0]?.emailAddress ??
-              u.primaryEmailAddress?.emailAddress ??
-              null;
-            if (!toEmail) continue;
-
-            const displayName = u.firstName ?? u.username ?? "Student";
-            const html = await render(
-              React.createElement(NewVideoAdded, {
-                name: displayName,
-                course: course.title,
-                week,
-                videoTitle: topicId ? `New lesson video (${topicId})` : title,
-                videoLink: videoLink,
-              }),
-            );
-
-            try {
-              await resend.emails.send({
-                from: "UltimaSpark Academy <noreply@ultimaspark.com>",
-                to: toEmail,
-                subject: `New video in Week ${week} of ${course.title}`,
-                html,
-              });
-            } catch (err) {
-              console.error(
-                `addCourseVideo email send failed for user ${u.id}:`,
-                err,
-              );
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error("addCourseVideo email notification error:", err);
-    }
+    await notifyEnrolledNewLessonVideo({
+      client,
+      adminUserId,
+      courseSlug: slug,
+      courseTitle: course.title,
+      week,
+      youtubeId,
+      topicId: topicId || null,
+      videoTitleFallback: title,
+    });
 
     return { success: true, message: "Video added" };
   } catch (err) {
@@ -816,7 +854,7 @@ export async function deleteCohortLiveVideo(formData: FormData): Promise<AdminRe
 
 export async function setTopicVideoId(formData: FormData): Promise<AdminResult> {
   try {
-    await requireAdmin();
+    const { client, userId: adminUserId } = await requireAdmin();
     const slug = (formData.get("slug") as string | null)?.trim();
     const topicId = (formData.get("topicId") as string | null)?.trim();
     const raw = (formData.get("youtubeId") as string | null)?.trim() ?? "";
@@ -835,6 +873,16 @@ export async function setTopicVideoId(formData: FormData): Promise<AdminResult> 
 
     const course = courses[idx];
     const weeksDetail = course.weeksDetail ?? [];
+
+    let oldVideoId: string | undefined;
+    for (const w of weeksDetail) {
+      const hit = (w.topics ?? []).find((t) => t.id === topicId);
+      if (hit) {
+        oldVideoId = hit.videoId;
+        break;
+      }
+    }
+
     let found = false;
     const updatedWeeks = weeksDetail.map((w) => ({
       ...w,
@@ -855,12 +903,124 @@ export async function setTopicVideoId(formData: FormData): Promise<AdminResult> 
 
     courses[idx] = { ...course, weeksDetail: updatedWeeks };
     await writeCourses(courses);
+
+    if (youtubeId && youtubeId !== oldVideoId) {
+      const weekNum = findWeekNumberForTopic(course, topicId);
+      await notifyEnrolledNewLessonVideo({
+        client,
+        adminUserId,
+        courseSlug: slug,
+        courseTitle: course.title,
+        week: weekNum,
+        youtubeId,
+        topicId,
+      });
+    }
+
     return { success: true, message: "Topic video updated" };
   } catch (err) {
     console.error("setTopicVideoId error", err);
     return {
       success: false,
       error: persistErrorMessage(err, "Failed to update topic video"),
+    };
+  }
+}
+
+const QUIZ_OPTION_KEYS = ["a", "b", "c", "d"] as const;
+
+export async function setTopicQuiz(formData: FormData): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const slug = (formData.get("slug") as string | null)?.trim();
+    const topicId = (formData.get("topicId") as string | null)?.trim();
+    const clear = (formData.get("clear") as string | null) === "1";
+
+    if (!slug || !topicId) {
+      return { success: false, error: "slug and topicId are required" };
+    }
+
+    const courses = await readCourses();
+    const idx = courses.findIndex((c) => c.slug === slug);
+    if (idx === -1) return { success: false, error: "Course not found" };
+
+    const course = courses[idx];
+    const weeksDetail = course.weeksDetail ?? [];
+
+    if (clear) {
+      let foundTopic = false;
+      const updatedWeeks = weeksDetail.map((w) => ({
+        ...w,
+        topics: (w.topics ?? []).map((t) => {
+          if (t.id !== topicId) return t;
+          foundTopic = true;
+          const { topicQuiz: _removed, ...rest } = t;
+          return rest;
+        }),
+      }));
+      if (!foundTopic) {
+        return { success: false, error: "Topic not found in curriculum" };
+      }
+      courses[idx] = { ...course, weeksDetail: updatedWeeks };
+      await writeCourses(courses);
+      return { success: true, message: "Topic quiz removed" };
+    }
+
+    const question = (formData.get("question") as string | null)?.trim() ?? "";
+    const correctAnswer = (
+      (formData.get("correctAnswer") as string | null) ?? "a"
+    )
+      .trim()
+      .toLowerCase()
+      .slice(0, 1);
+
+    const labels = QUIZ_OPTION_KEYS.map(
+      (k) =>
+        (formData.get(`label${k.toUpperCase()}`) as string | null)?.trim() ??
+        "",
+    );
+
+    if (!question) {
+      return { success: false, error: "Quiz question is required" };
+    }
+    if (!/^[a-d]$/.test(correctAnswer)) {
+      return { success: false, error: "Correct answer must be a, b, c, or d" };
+    }
+    if (labels.some((l) => !l)) {
+      return { success: false, error: "All four answer labels are required" };
+    }
+
+    const topicQuiz: TopicQuizConfig = {
+      question,
+      correctAnswer,
+      options: QUIZ_OPTION_KEYS.map((value, i) => ({
+        value,
+        label: labels[i]!,
+      })),
+    };
+
+    let found = false;
+    const updatedWeeks = weeksDetail.map((w) => ({
+      ...w,
+      topics: (w.topics ?? []).map((t) => {
+        if (t.id !== topicId) return t;
+        found = true;
+        return { ...t, topicQuiz };
+      }),
+    }));
+
+    if (!found) {
+      return { success: false, error: "Topic not found in curriculum" };
+    }
+
+    courses[idx] = { ...course, weeksDetail: updatedWeeks };
+    await writeCourses(courses);
+    return { success: true, message: "Topic quiz saved" };
+  } catch (err) {
+    console.error("setTopicQuiz error", err);
+    return {
+      success: false,
+      error: persistErrorMessage(err, "Failed to save topic quiz"),
     };
   }
 }

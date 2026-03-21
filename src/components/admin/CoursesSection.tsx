@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,8 +17,11 @@ import {
   updateCohortLiveVideo,
   deleteCohortLiveVideo,
   setTopicVideoId,
+  setTopicQuiz,
   updateTopicInstructorNotes,
 } from "@/app/actions/admin";
+import type { TopicQuizConfig } from "@/lib/courses";
+import { resolveTopicQuizContent } from "@/lib/topic-quiz";
 import { Select } from "@/components/ui/select";
 
 type AdminCourseRow = Awaited<ReturnType<typeof adminListCourses>>[number];
@@ -99,7 +103,31 @@ export function CoursesSection() {
     weeks: 6,
   });
   const [editLiveVideos, setEditLiveVideos] = useState<Record<string, string>>({});
+  /** Which course card is expanded (stable id: original slug while editing, else current slug). */
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   const router = useRouter();
+
+  const resetSubPanels = useCallback(() => {
+    setEditingIndex(null);
+    setEditingOriginalSlug(null);
+    setVideoFormSlug(null);
+    setCurriculumSlug(null);
+    setLiveVideoSlug(null);
+    setInstructorNotesSlug(null);
+  }, []);
+
+  const toggleCourseExpanded = useCallback(
+    (rowId: string) => {
+      setExpandedCourseId((prev) => {
+        const next = prev === rowId ? null : rowId;
+        if (prev !== null && next !== null && prev !== next) {
+          queueMicrotask(resetSubPanels);
+        }
+        return next;
+      });
+    },
+    [resetSubPanels],
+  );
 
   /** Reset add-video form when opening "Manage Videos" or switching course */
   useEffect(() => {
@@ -193,13 +221,16 @@ export function CoursesSection() {
       }
       const refreshed = await adminListCourses();
       setCourses(refreshed);
+      setExpandedCourseId((prev) =>
+        editingOriginalSlug && prev === editingOriginalSlug ? row.slug : prev,
+      );
       setEditingIndex(null);
       setEditingOriginalSlug(null);
       router.refresh();
     });
   };
 
-  const handleDelete = (slug: string) => {
+  const handleDelete = (slug: string, rowIdForExpand: string) => {
     if (!slug) return;
     const confirmDelete = window.confirm(
       "Delete this course and remove it from all users? This cannot be undone.",
@@ -213,6 +244,9 @@ export function CoursesSection() {
         return;
       }
       setCourses((prev) => prev.filter((c) => c.slug !== slug));
+      setExpandedCourseId((prev) =>
+        prev === rowIdForExpand || prev === slug ? null : prev,
+      );
       if (editingOriginalSlug === slug) {
         setEditingIndex(null);
         setEditingOriginalSlug(null);
@@ -329,6 +363,11 @@ export function CoursesSection() {
               editingIndex === index && editingOriginalSlug
                 ? editingOriginalSlug
                 : c.slug;
+            const rowId =
+              editingIndex === index && editingOriginalSlug
+                ? editingOriginalSlug
+                : c.slug;
+            const isExpanded = expandedCourseId === rowId;
 
             return (
             <div
@@ -339,16 +378,41 @@ export function CoursesSection() {
               }
               className="flex min-w-0 flex-col gap-2 rounded-lg border border-primary/15 bg-surface/60 p-3"
             >
-              <div className="min-w-0 flex-1 space-y-1">
-                <div>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-md border border-primary/20 bg-surface/80 px-3 py-2.5 text-left transition hover:bg-primary/5"
+                onClick={() => toggleCourseExpanded(rowId)}
+                aria-expanded={isExpanded}
+                aria-label={
+                  isExpanded
+                    ? `${c.title} — collapse`
+                    : `${c.title} — expand to edit`
+                }
+              >
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-text-primary">
                     {c.title}
                   </p>
                   <p className="text-[11px] text-text-secondary break-words">
-                    slug: <span className="font-mono break-all">{c.slug}</span> • weeks:{" "}
-                    {c.weeks} • enrolled: {c.enrolledCount}
+                    slug: <span className="font-mono break-all">{c.slug}</span>{" "}
+                    • weeks: {c.weeks} • enrolled: {c.enrolledCount}
                   </p>
                 </div>
+                {isExpanded ? (
+                  <ChevronDown
+                    className="h-5 w-5 shrink-0 text-primary"
+                    aria-hidden
+                  />
+                ) : (
+                  <ChevronRight
+                    className="h-5 w-5 shrink-0 text-text-secondary"
+                    aria-hidden
+                  />
+                )}
+              </button>
+              {isExpanded && (
+                <div className="space-y-2 border-t border-primary/10 pt-3">
+              <div className="min-w-0 flex-1 space-y-1">
                 {editingIndex === index && (
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <Input
@@ -393,19 +457,41 @@ export function CoursesSection() {
                           <p className="font-semibold text-text-primary">Week {wi + 1}: {week.title}</p>
                           <ul className="mt-1 list-none space-y-2 text-text-secondary">
                             {(week.topics ?? []).map((topic: any) => (
-                              <TopicVideoAdminRow
-                                key={topic.id}
-                                courseSlug={c.slug}
-                                topicId={topic.id}
-                                topicTitle={topic.title}
-                                initialVideoId={topic.videoId}
-                                onError={setActionError}
-                                onSaved={async () => {
-                                  const refreshed = await adminListCourses();
-                                  setCourses(refreshed);
-                                  router.refresh();
-                                }}
-                              />
+                              <li
+                                key={`${stableKey}-topic-admin-${topic.id}`}
+                                className="list-none space-y-3 rounded border border-primary/10 p-2"
+                              >
+                                <TopicVideoAdminRow
+                                  courseSlug={c.slug}
+                                  topicId={topic.id}
+                                  topicTitle={topic.title}
+                                  initialVideoId={topic.videoId}
+                                  onError={setActionError}
+                                  onSaved={async () => {
+                                    const refreshed = await adminListCourses();
+                                    setCourses(refreshed);
+                                    router.refresh();
+                                  }}
+                                />
+                                <TopicQuizAdminRow
+                                  courseSlug={c.slug}
+                                  topic={topic as {
+                                    id: string;
+                                    title: string;
+                                    topicQuiz?: TopicQuizConfig;
+                                  }}
+                                  mutationKey={mutationKey}
+                                  runMutation={runMutation}
+                                  mutationSaveKey={`topicQuiz-save-${c.slug}-${topic.id}`}
+                                  mutationClearKey={`topicQuiz-clear-${c.slug}-${topic.id}`}
+                                  onError={setActionError}
+                                  onSaved={async () => {
+                                    const refreshed = await adminListCourses();
+                                    setCourses(refreshed);
+                                    router.refresh();
+                                  }}
+                                />
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -809,7 +895,7 @@ export function CoursesSection() {
                     size="sm"
                     variant="destructive"
                     disabled={mutationKey === `delete-${c.slug}`}
-                    onClick={() => handleDelete(c.slug)}
+                    onClick={() => handleDelete(c.slug, rowId)}
                   >
                     Delete
                   </Button>
@@ -1171,6 +1257,8 @@ export function CoursesSection() {
                   </div>
                 </div>
               )}
+                </div>
+              )}
             </div>
             );
           })
@@ -1226,7 +1314,10 @@ function TopicVideoAdminRow({
   };
 
   return (
-    <li className="flex flex-col gap-2 rounded border border-primary/10 p-2">
+    <div className="flex flex-col gap-2 border-b border-primary/10 pb-3">
+      <span className="text-xs font-semibold uppercase tracking-wide text-spark">
+        Topic video
+      </span>
       <span className="text-sm text-text-primary">{topicTitle}</span>
       <Input
         value={val}
@@ -1261,7 +1352,177 @@ function TopicVideoAdminRow({
           {initialVideoId || "—"}
         </span>
       </p>
-    </li>
+    </div>
+  );
+}
+
+function TopicQuizAdminRow({
+  courseSlug,
+  topic,
+  mutationKey,
+  runMutation,
+  mutationSaveKey,
+  mutationClearKey,
+  onError,
+  onSaved,
+}: {
+  courseSlug: string;
+  topic: { id: string; title: string; topicQuiz?: TopicQuizConfig };
+  mutationKey: string | null;
+  runMutation: (key: string, fn: () => Promise<void>) => void;
+  mutationSaveKey: string;
+  mutationClearKey: string;
+  onError: (msg: string | null) => void;
+  onSaved: () => Promise<void>;
+}) {
+  const fallback = resolveTopicQuizContent(topic);
+  const q = topic.topicQuiz;
+
+  const [question, setQuestion] = useState(
+    () => q?.question?.trim() || fallback.question,
+  );
+  const [labelA, setLabelA] = useState(
+    () => q?.options?.find((o) => o.value === "a")?.label ?? fallback.options[0]?.label ?? "",
+  );
+  const [labelB, setLabelB] = useState(
+    () => q?.options?.find((o) => o.value === "b")?.label ?? fallback.options[1]?.label ?? "",
+  );
+  const [labelC, setLabelC] = useState(
+    () => q?.options?.find((o) => o.value === "c")?.label ?? fallback.options[2]?.label ?? "",
+  );
+  const [labelD, setLabelD] = useState(
+    () => q?.options?.find((o) => o.value === "d")?.label ?? fallback.options[3]?.label ?? "",
+  );
+  const [correctAnswer, setCorrectAnswer] = useState(
+    () => (q?.correctAnswer && /^[a-d]$/i.test(q.correctAnswer) ? q.correctAnswer.toLowerCase() : "a"),
+  );
+
+  useEffect(() => {
+    const fb = resolveTopicQuizContent(topic);
+    const next = topic.topicQuiz;
+    setQuestion(next?.question?.trim() || fb.question);
+    setLabelA(next?.options?.find((o) => o.value === "a")?.label ?? fb.options[0]?.label ?? "");
+    setLabelB(next?.options?.find((o) => o.value === "b")?.label ?? fb.options[1]?.label ?? "");
+    setLabelC(next?.options?.find((o) => o.value === "c")?.label ?? fb.options[2]?.label ?? "");
+    setLabelD(next?.options?.find((o) => o.value === "d")?.label ?? fb.options[3]?.label ?? "");
+    setCorrectAnswer(
+      next?.correctAnswer && /^[a-d]$/i.test(next.correctAnswer)
+        ? next.correctAnswer.toLowerCase()
+        : "a",
+    );
+  }, [topic.id, topic.topicQuiz, topic.title]);
+
+  return (
+    <div className="flex flex-col gap-2 rounded border border-growth/25 bg-growth/5 p-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-growth">
+        Topic check-in quiz
+      </p>
+      <p className="text-[10px] text-text-secondary">
+        Custom question and four answers (learners see this on the dashboard). Omit saving to keep the default template + overrides file for the correct answer.
+      </p>
+      <label className="text-[10px] font-medium text-text-primary">
+        Question
+        <textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          rows={2}
+          className="mt-1 w-full rounded-md border border-primary/25 bg-surface px-2 py-1 text-[11px] text-text-primary outline-none focus:border-spark"
+        />
+      </label>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {(
+          [
+            ["a", labelA, setLabelA],
+            ["b", labelB, setLabelB],
+            ["c", labelC, setLabelC],
+            ["d", labelD, setLabelD],
+          ] as const
+        ).map(([key, val, setVal]) => (
+          <label key={key} className="text-[10px] font-medium text-text-primary">
+            Answer {key.toUpperCase()}
+            <Input
+              value={val}
+              onChange={(e) => setVal(e.target.value)}
+              className="mt-1 bg-surface text-[11px] text-text-primary"
+            />
+          </label>
+        ))}
+      </div>
+      <label className="text-[10px] font-medium text-text-primary">
+        Correct answer
+        <Select
+          value={correctAnswer}
+          onChange={(e) => setCorrectAnswer(e.target.value)}
+          className="mt-1 h-9 w-full max-w-[120px] text-[11px]"
+        >
+          <option value="a">A</option>
+          <option value="b">B</option>
+          <option value="c">C</option>
+          <option value="d">D</option>
+        </Select>
+      </label>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button
+          type="button"
+          size="xs"
+          className="bg-growth text-bg hover:bg-growth/90"
+          disabled={mutationKey === mutationSaveKey}
+          onClick={() => {
+            onError(null);
+            void runMutation(mutationSaveKey, async () => {
+              const fd = new FormData();
+              fd.append("slug", courseSlug);
+              fd.append("topicId", topic.id);
+              fd.append("question", question.trim());
+              fd.append("correctAnswer", correctAnswer);
+              fd.append("labelA", labelA.trim());
+              fd.append("labelB", labelB.trim());
+              fd.append("labelC", labelC.trim());
+              fd.append("labelD", labelD.trim());
+              const r = await setTopicQuiz(fd);
+              if (!r.success) {
+                onError(r.error ?? "Could not save quiz");
+                return;
+              }
+              await onSaved();
+            });
+          }}
+        >
+          Save quiz
+        </Button>
+        <Button
+          type="button"
+          size="xs"
+          variant="outline"
+          className="border-destructive/50 text-destructive hover:bg-destructive/10"
+          disabled={!topic.topicQuiz || mutationKey === mutationClearKey}
+          onClick={() => {
+            if (
+              !window.confirm(
+                "Remove custom quiz for this topic? Learners will see the default check-in again.",
+              )
+            ) {
+              return;
+            }
+            onError(null);
+            void runMutation(mutationClearKey, async () => {
+              const fd = new FormData();
+              fd.append("slug", courseSlug);
+              fd.append("topicId", topic.id);
+              fd.append("clear", "1");
+              const r = await setTopicQuiz(fd);
+              if (!r.success) {
+                onError(r.error ?? "Could not remove quiz");
+                return;
+              }
+              await onSaved();
+            });
+          }}
+        >
+          Delete custom quiz
+        </Button>
+      </div>
+    </div>
   );
 }
 

@@ -1,9 +1,19 @@
 import { readCourses as readCoursesFromStore } from "@/lib/course-store";
 
+/** Per-topic quiz on the learner dashboard (optional; falls back to generic template). */
+export type TopicQuizConfig = {
+  question: string;
+  options: { value: string; label: string }[];
+  /** Correct MCQ value, typically a–d */
+  correctAnswer: string;
+};
+
 export type CourseTopic = {
   id: string;
   title: string;
   videoId?: string;
+  /** Custom topic check-in quiz; omit to use default copy + topic-quiz-overrides.json for answer. */
+  topicQuiz?: TopicQuizConfig;
   subtopics?: string[];
   bullets?: string[];
 };
