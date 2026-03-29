@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { getCourses } from "@/lib/courses";
+import { courseForPublicMarketingPage, getCourses } from "@/lib/courses";
 import { getCourseEnrollmentSnapshot } from "@/lib/course-enrollment";
 import { CoursePageTemplate } from "@/components/CoursePageTemplate";
 
@@ -21,8 +21,11 @@ export default async function CourseSlugPage(props: {
 
   const user = await currentUser();
   const enrollment = getCourseEnrollmentSnapshot(user, course.slug);
+  const publicCourse = courseForPublicMarketingPage(course);
 
-  return <CoursePageTemplate course={course} enrollment={enrollment} />;
+  return (
+    <CoursePageTemplate course={publicCourse} enrollment={enrollment} />
+  );
 }
 
 

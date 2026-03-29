@@ -73,16 +73,6 @@ export function CoursePageTemplate({ course, enrollment }: Props) {
                                 ))}
                               </ul>
                             )}
-                            {topic.videoId && (
-                              <a
-                                href={`https://www.youtube.com/watch?v=${topic.videoId}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-3 inline-flex items-center justify-center rounded-md border border-spark/40 bg-spark/10 px-3 py-1 text-xs font-semibold text-spark transition hover:bg-spark/20"
-                              >
-                                Watch Video
-                              </a>
-                            )}
                           </AccordionContent>
                         </AccordionItem>
                       ))}
@@ -100,7 +90,8 @@ export function CoursePageTemplate({ course, enrollment }: Props) {
               </h2>
               <p className="mt-2 text-xs text-text-secondary">
                 This course is structured as weekly projects with topic breakdowns.
-                Video availability and completion are now tracked in your dashboard.
+                Lesson videos are only available in your dashboard for enrolled
+                students.
               </p>
             </div>
           </aside>

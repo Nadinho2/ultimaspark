@@ -78,6 +78,28 @@ export async function getCoursesBySlug(): Promise<Record<string, Course>> {
   );
 }
 
+/**
+ * Course data for public marketing pages (/courses/[slug]): removes lesson video IDs
+ * and other fields that should only be available on the authenticated dashboard.
+ */
+export function courseForPublicMarketingPage(course: Course): Course {
+  const weeksDetail = course.weeksDetail?.map((week) => ({
+    ...week,
+    topics: week.topics.map((topic) => {
+      const next = { ...topic };
+      delete next.videoId;
+      return next;
+    }),
+  }));
+
+  return {
+    ...course,
+    weeksDetail,
+    cohortLiveVideos: undefined,
+    videos: undefined,
+  };
+}
+
 export function extractYouTubeId(input: string): string {
   const value = input.trim();
   if (!value) return "";
