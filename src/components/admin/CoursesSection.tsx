@@ -23,8 +23,11 @@ import {
 import type { TopicQuizConfig } from "@/lib/courses";
 import { resolveTopicQuizContent } from "@/lib/topic-quiz-shared";
 import { Select } from "@/components/ui/select";
+import Link from "next/link";
 
 type AdminCourseRow = Awaited<ReturnType<typeof adminListCourses>>[number];
+
+export type CoursesSectionVariant = "subscription" | "cohort";
 
 function flattenTopicsForNotes(course: AdminCourseRow) {
   const weeks = ((course as { weeksDetail?: { title?: string; topics?: { id: string; title: string }[] }[] }).weeksDetail ?? []) as {
@@ -44,7 +47,11 @@ function flattenTopicsForNotes(course: AdminCourseRow) {
   return rows;
 }
 
-export function CoursesSection() {
+export function CoursesSection({
+  variant,
+}: {
+  variant: CoursesSectionVariant;
+}) {
   const [courses, setCourses] = useState<AdminCourseRow[]>([]);
   const [loading, setLoading] = useState(true);
   /** Which single admin action is in flight (avoids global `saving` dimming every button at once). */
@@ -77,7 +84,6 @@ export function CoursesSection() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [videoFormSlug, setVideoFormSlug] = useState<string | null>(null);
   const [curriculumSlug, setCurriculumSlug] = useState<string | null>(null);
-  const [liveVideoSlug, setLiveVideoSlug] = useState<string | null>(null);
   const [newVideo, setNewVideo] = useState({
     week: 1,
     topicId: "",
@@ -112,7 +118,6 @@ export function CoursesSection() {
     setEditingOriginalSlug(null);
     setVideoFormSlug(null);
     setCurriculumSlug(null);
-    setLiveVideoSlug(null);
     setInstructorNotesSlug(null);
   }, []);
 
@@ -140,16 +145,16 @@ export function CoursesSection() {
     }
   }, [videoFormSlug]);
 
-  /** Reset live-video fields when opening the panel or switching course (fresh cohort/topic picks) */
+  /** Reset live-video form when switching expanded course on the cohort admin page */
   useEffect(() => {
-    if (!liveVideoSlug) return;
+    if (variant !== "cohort" || !expandedCourseId) return;
     setNewLiveVideo({
       cohortId: "",
       week: 1,
       topicId: "",
       youtubeId: "",
     });
-  }, [liveVideoSlug]);
+  }, [variant, expandedCourseId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -285,8 +290,18 @@ export function CoursesSection() {
         courses are read from{" "}
         <code className="rounded bg-surface px-1 font-mono text-[10px]">data/courses.json</code>{" "}
         (read-only on Vercel). With Supabase configured, saves go to the database. See{" "}
-        <code className="rounded bg-surface px-1 font-mono text-[10px]">docs/supabase-courses.md</code>.
+        <code className="rounded bg-surface px-1 font-mono text-[10px]">docs/supabase-courses.md</code>
+        .
+        {variant === "cohort" && (
+          <>
+            {" "}
+            <span className="font-medium text-text-primary">
+              Cohort uploads use the same course store.
+            </span>
+          </>
+        )}
       </p>
+      {variant === "subscription" && (
       <div className="space-y-2 rounded-lg border border-primary/20 bg-surface/60 p-3">
         <p className="text-sm font-medium text-text-primary">
           Create new course
@@ -352,6 +367,7 @@ export function CoursesSection() {
           </p>
         )}
       </div>
+      )}
 
       <div className="space-y-2">
         {courses.length === 0 ? (
@@ -412,6 +428,23 @@ export function CoursesSection() {
               </button>
               {isExpanded && (
                 <div className="space-y-2 border-t border-primary/10 pt-3">
+                {variant === "cohort" && (
+                  <p className="text-[11px] text-text-secondary">
+                    Cohorts and live recordings for{" "}
+                    <span className="font-medium text-text-primary">
+                      {c.title}
+                    </span>
+                    . Topics come from the curriculum — edit on{" "}
+                    <Link
+                      href="/admin/subscription"
+                      className="font-medium text-primary underline-offset-2 hover:underline"
+                    >
+                      Subscription videos
+                    </Link>
+                    .
+                  </p>
+                )}
+                {variant === "subscription" && (
               <div className="min-w-0 flex-1 space-y-1">
                 {editingIndex === index && (
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -857,6 +890,8 @@ export function CoursesSection() {
                   </div>
                 )}
               </div>
+                )}
+              {variant === "subscription" && (
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -957,21 +992,9 @@ export function CoursesSection() {
                     ? "Close instructor notes"
                     : "Instructor notes"}
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="border-spark/60 text-spark hover:bg-spark/10"
-                  onClick={() =>
-                    setLiveVideoSlug((prev) =>
-                      prev === c.slug ? null : c.slug,
-                    )
-                  }
-                >
-                  {liveVideoSlug === c.slug ? "Close Live Videos" : "Add Live Session Video"}
-                </Button>
               </div>
-              {liveVideoSlug === c.slug && (
+              )}
+              {variant === "cohort" && (
                 <div className="mt-3 min-w-0 rounded-md border border-spark/30 bg-surface/70 p-3">
                   <p className="text-[11px] font-medium text-text-primary">
                     Add live session recording for cohort learners
@@ -1240,7 +1263,6 @@ export function CoursesSection() {
                               topicId: "",
                               youtubeId: "",
                             });
-                            setLiveVideoSlug(null);
                             void adminListCourses().then(setCourses);
                             router.refresh();
                           } else {

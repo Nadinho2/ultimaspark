@@ -1,6 +1,3 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { userHasAdminRole } from "@/lib/admin-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Testimonial } from "@/lib/supabase/types";
 import { TestimonialsModeration } from "@/components/admin/TestimonialsModeration";
@@ -14,14 +11,6 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminTestimonialsPage() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  if (!userHasAdminRole(user)) {
-    redirect("/dashboard");
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from(TESTIMONIALS_TABLE)
@@ -30,24 +19,21 @@ export default async function AdminTestimonialsPage() {
 
   if (error) {
     return (
-      <section className="py-12">
-        <div className="mx-auto max-w-6xl">
-          <h1 className="mb-8 text-3xl font-bold text-primary">Manage Testimonials</h1>
-          <p className="text-sm text-text-secondary">Error loading testimonials</p>
-        </div>
-      </section>
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-primary">Manage Testimonials</h2>
+        <p className="text-sm text-text-secondary">Error loading testimonials</p>
+      </div>
     );
   }
 
   const testimonials = (data ?? []) as Testimonial[];
 
   return (
-    <section className="py-12">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
         <header className="space-y-2">
-          <h1 className="mb-8 text-3xl font-bold text-primary">
+          <h2 className="text-2xl font-bold text-primary">
             Manage Testimonials
-          </h1>
+          </h2>
           <p className="text-sm text-text-secondary sm:text-base">
             Review and approve learner testimonials before they appear publicly.
           </p>
@@ -67,8 +53,7 @@ export default async function AdminTestimonialsPage() {
             <span className="font-mono">UltimaSparkAcademyTestimonial</span> for the anon role.
           </div>
         )}
-      </div>
-    </section>
+    </div>
   );
 }
 

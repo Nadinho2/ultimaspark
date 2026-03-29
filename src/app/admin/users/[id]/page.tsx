@@ -1,6 +1,4 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { userHasAdminRole } from "@/lib/admin-role";
+import { clerkClient } from "@clerk/nextjs/server";
 
 type Params = {
   id: string;
@@ -13,15 +11,7 @@ export const metadata = {
 export default async function AdminUserDetailsPage(props: {
   params: Promise<Params>;
 }) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-
   const client = await clerkClient();
-  const me = await client.users.getUser(userId);
-  if (!userHasAdminRole(me)) {
-    redirect("/dashboard");
-  }
-
   const { id } = await props.params;
   const u = await client.users.getUser(id);
 
@@ -31,10 +21,10 @@ export default async function AdminUserDetailsPage(props: {
     u.emailAddresses?.[0]?.emailAddress ?? u.primaryEmailAddress?.emailAddress ?? "—";
 
   return (
-    <section className="py-10">
-      <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-primary sm:text-3xl">
         User Details
-      </h1>
+      </h2>
       <p className="mt-3 text-sm text-text-secondary sm:text-base">
         Basic details for moderation and troubleshooting.
       </p>
@@ -56,7 +46,7 @@ export default async function AdminUserDetailsPage(props: {
           </p>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
