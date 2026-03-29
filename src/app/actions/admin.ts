@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
@@ -312,6 +313,8 @@ export async function removeCourseFromUser(
       },
     });
 
+    revalidatePath("/dashboard");
+
     return { success: true, message: "Course removed from user" };
   } catch (err) {
     console.error("removeCourseFromUser error", err);
@@ -447,7 +450,39 @@ export async function deleteCourse(slug: string): Promise<AdminResult> {
       const updatedEnrolled = enrolled.filter((c) => c !== slug);
       const updatedPending = pending.filter((p) => p.courseSlug !== slug);
       const updatedProgress = { ...progress };
-      delete (updatedProgress as any)[slug];
+      delete (updatedProgress as Record<string, unknown>)[slug];
+
+      const enrollmentTypes = {
+        ...((u.publicMetadata.enrollmentTypes as
+          | Record<string, "subscription" | "cohort">
+          | undefined) ?? {}),
+      };
+      delete enrollmentTypes[slug];
+
+      const cohortAssignments = {
+        ...((u.publicMetadata.cohortAssignments as
+          | Record<string, string>
+          | undefined) ?? {}),
+      };
+      delete cohortAssignments[slug];
+
+      const enrollmentDates = {
+        ...((u.publicMetadata.enrollmentDates as
+          | Record<string, string>
+          | undefined) ?? {}),
+      };
+      delete enrollmentDates[slug];
+
+      const liveSessionVideos = {
+        ...((u.publicMetadata.liveSessionVideos as
+          | Record<string, unknown>
+          | undefined) ?? {}),
+      };
+      delete liveSessionVideos[slug];
+
+      const claimedCertificates =
+        (u.publicMetadata.claimedCertificates as string[] | undefined) ?? [];
+      const updatedCertificates = claimedCertificates.filter((s) => s !== slug);
 
       await client.users.updateUserMetadata(u.id, {
         publicMetadata: {
@@ -455,9 +490,16 @@ export async function deleteCourse(slug: string): Promise<AdminResult> {
           enrolledCourses: updatedEnrolled,
           pendingEnrollments: updatedPending,
           progress: updatedProgress,
+          enrollmentTypes,
+          cohortAssignments,
+          enrollmentDates,
+          liveSessionVideos,
+          claimedCertificates: updatedCertificates,
         },
       });
     }
+
+    revalidatePath("/dashboard");
 
     return { success: true, message: "Course deleted" };
   } catch (err) {

@@ -1,5 +1,6 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { userHasAdminRole } from "@/lib/admin-role";
+import { normalizeEnrolledCourseSlugs } from "@/lib/course-enrollment";
 import { redirect } from "next/navigation";
 import { differenceInCalendarDays } from "date-fns";
 import { Progress, ProgressIndicator } from "@/components/ui/progress";
@@ -31,6 +32,8 @@ import {
   topicVideoNoteKey,
 } from "@/lib/topic-notes-keys";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) {
@@ -42,8 +45,9 @@ export default async function DashboardPage() {
 
   const displayName = user.firstName || user.username || "there";
 
-  const enrolledCourses =
-    (user.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
+  const enrolledCourses = normalizeEnrolledCourseSlugs(
+    user.publicMetadata.enrolledCourses,
+  );
 
   const progress =
     (user.publicMetadata.progress as
@@ -85,17 +89,19 @@ export default async function DashboardPage() {
 
   const allCourses = await getCourses();
 
-  const baseCourseConfigs = isAdmin
-    ? allCourses
-    : allCourses.filter((c) => enrolledCourses.includes(c.slug));
+  // Learner dashboard always reflects Clerk enrollments only (including for admins).
+  // Full catalog management lives under /admin.
+  const baseCourseConfigs = allCourses.filter((c) =>
+    enrolledCourses.includes(c.slug),
+  );
 
   const hasAnyCourses = baseCourseConfigs.length > 0;
 
   const subscriptionCourses = baseCourseConfigs.filter(
-    (c) => isAdmin || (enrollmentTypes[c.slug] ?? "subscription") === "subscription",
+    (c) => (enrollmentTypes[c.slug] ?? "subscription") === "subscription",
   );
   const cohortCourses = baseCourseConfigs.filter(
-    (c) => isAdmin || enrollmentTypes[c.slug] === "cohort",
+    (c) => enrollmentTypes[c.slug] === "cohort",
   );
 
   const isWeekUnlocked = (
