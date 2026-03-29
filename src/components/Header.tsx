@@ -20,13 +20,18 @@ export function Header() {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-surface/95 text-text-primary backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
-        <Link href="/" className="flex items-center gap-1 md:gap-2">
+        <Link
+          href="/"
+          className="flex items-center gap-1 md:gap-2"
+          aria-label="UltimaSpark Academy home"
+        >
           <Image
             src="/ultimaspark-logo.png"
             alt="UltimaSpark Academy"
-            width={180}
-            height={52}
-            className="h-9 w-auto md:h-10"
+            width={320}
+            height={96}
+            sizes="(max-width: 768px) 200px, 260px"
+            className="h-8 w-auto max-h-9 max-w-[200px] object-contain object-left md:h-9 md:max-h-10 md:max-w-[260px]"
             priority
           />
         </Link>

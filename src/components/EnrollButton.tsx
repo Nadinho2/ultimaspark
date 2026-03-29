@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -65,16 +66,26 @@ export function EnrollButton({
     });
   };
 
-  const label = isEnrolled
-    ? "Enrolled"
-    : isPendingApproval
-      ? "Pending Approval"
-      : isPending
-        ? "Submitting..."
-        : "Request Enrollment";
+  const label = isPending ? "Submitting..." : "Request Enrollment";
 
   return (
     <div className="space-y-2">
+      {isEnrolled && (
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className="inline-flex items-center rounded-full border border-growth/50 bg-growth/15 px-4 py-2 text-xs font-bold uppercase tracking-wide text-growth"
+            aria-label="You are enrolled in this course"
+          >
+            Enrolled
+          </span>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center rounded-xl border-2 border-primary bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-primary/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            View course videos
+          </Link>
+        </div>
+      )}
       {!isEnrolled && !isPendingApproval && (
         <div className="max-w-xs space-y-1">
           <label className="block text-xs font-medium text-text-secondary">
@@ -106,17 +117,27 @@ export function EnrollButton({
           )}
         </div>
       )}
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isPending || isEnrolled || isPendingApproval}
-        className={cn(
-          "inline-flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90 disabled:opacity-70",
-          className,
-        )}
-      >
-        {label}
-      </button>
+      {!isEnrolled && !isPendingApproval && (
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={isPending}
+          className={cn(
+            "inline-flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90 disabled:opacity-70",
+            className,
+          )}
+        >
+          {label}
+        </button>
+      )}
+      {isPendingApproval && (
+        <span
+          className="inline-flex items-center rounded-full border border-spark/50 bg-spark/15 px-4 py-2 text-xs font-bold uppercase tracking-wide text-spark"
+          aria-label="Enrollment pending approval"
+        >
+          {label}
+        </span>
+      )}
       {message && !isEnrolled && (
         <p className="text-xs text-growth">{message}</p>
       )}
