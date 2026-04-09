@@ -22,13 +22,9 @@ function resolveCourseSlugToRemove(
   return row.enrolledCourses[0] ?? "";
 }
 
-/** Slugs to show under each course section (enrollments + type assignments). */
+/** One section per course the user is actually enrolled in (Clerk enrolledCourses). */
 function slugsForCourseGrouping(row: AdminUserRow): string[] {
-  const set = new Set<string>(row.enrolledCourses);
-  for (const slug of Object.keys(row.enrollmentTypes)) {
-    if (slug.trim()) set.add(slug);
-  }
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
+  return [...row.enrolledCourses].sort((a, b) => a.localeCompare(b));
 }
 
 export function UsersTable() {
@@ -102,13 +98,7 @@ export function UsersTable() {
         );
         setCourseToRemoveByUser((prev) => {
           const next = { ...prev };
-          const row = rows.find((x) => x.id === userId);
-          const still = row?.enrolledCourses.filter((c) => c !== courseSlug) ?? [];
-          if (still.length > 0) {
-            next[userId] = still[0]!;
-          } else {
-            delete next[userId];
-          }
+          if (prev[userId] === courseSlug) delete next[userId];
           return next;
         });
         router.refresh();
@@ -176,12 +166,6 @@ export function UsersTable() {
                         ? ` • ${row.cohortAssignments[groupSlug]}`
                         : ""}
                     </span>
-                    {!row.enrolledCourses.includes(groupSlug) && (
-                      <p className="text-[10px] text-spark">
-                        Enrollment type set, but this slug is missing from
-                        Clerk enrolledCourses — re-save or approve again.
-                      </p>
-                    )}
                     {row.enrolledCourses.filter((c) => c !== groupSlug).length >
                       0 && (
                       <p className="text-[10px] text-text-secondary">

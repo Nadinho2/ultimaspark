@@ -274,8 +274,9 @@ export async function removeCourseFromUser(
   try {
     const { client } = await requireAdmin();
     const user = await client.users.getUser(userId);
-    const enrolled =
-      (user.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
+    const enrolled = enrolledCoursesFromMetadata(
+      user.publicMetadata.enrolledCourses,
+    );
     const updatedEnrolled = enrolled.filter((c) => c !== courseSlug);
 
     const progress =
