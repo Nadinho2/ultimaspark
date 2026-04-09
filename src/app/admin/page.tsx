@@ -45,7 +45,7 @@ export default function AdminHomePage() {
           <CardHeader>
             <CardTitle className="text-primary">Pending Approvals</CardTitle>
             <CardDescription className="text-text-secondary">
-              Approve or reject enrollment requests across all courses.
+              Approve or reject enrollment requests grouped by applied course.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -75,7 +75,7 @@ export default function AdminHomePage() {
         <CardHeader>
           <CardTitle className="text-primary">Users</CardTitle>
           <CardDescription className="text-text-secondary">
-            Search, inspect, and manage learner enrollments.
+            Search, inspect, and manage learner enrollments grouped by enrolled course.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -101,102 +101,126 @@ export function PendingApprovals() {
     );
   }
 
+  const groupedByCourse = rows.reduce<Record<string, PendingRow[]>>((acc, row) => {
+    if (!acc[row.courseSlug]) acc[row.courseSlug] = [];
+    acc[row.courseSlug]!.push(row);
+    return acc;
+  }, {});
+  const courseSlugs = Object.keys(groupedByCourse).sort((a, b) =>
+    a.localeCompare(b),
+  );
+
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm text-text-secondary">
-        <thead>
-          <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-text-secondary">
-            <th className="px-3 py-2">User</th>
-            <th className="px-3 py-2">Email</th>
-            <th className="px-3 py-2">Course</th>
-            <th className="px-3 py-2">Type</th>
-            <th className="px-3 py-2">Requested</th>
-            <th className="px-3 py-2">Message</th>
-            <th className="px-3 py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr
-              key={`${row.userId}-${row.courseSlug}-${row.requestedAt}`}
-              className="border-b border-white/5 last:border-0"
-            >
-              <td className="px-3 py-2 text-text-primary">
-                {row.name ?? "Unknown"}
-              </td>
-              <td className="px-3 py-2">{row.email ?? "—"}</td>
-              <td className="px-3 py-2">{row.courseSlug}</td>
-              <td className="px-3 py-2 text-xs">
-                <Select
-                  value={
-                    chosenTypes[`${row.userId}-${row.courseSlug}`] ??
-                    row.enrollmentType ??
-                    "subscription"
-                  }
-                  onChange={(e) =>
-                    setChosenTypes((prev) => ({
-                      ...prev,
-                      [`${row.userId}-${row.courseSlug}`]:
-                        e.target.value === "cohort" ? "cohort" : "subscription",
-                    }))
-                  }
-                >
-                  <option value="subscription">subscription</option>
-                  <option value="cohort">cohort</option>
-                </Select>
-                {(chosenTypes[`${row.userId}-${row.courseSlug}`] ?? row.enrollmentType) ===
-                  "cohort" && (
-                  <Input
-                    value={chosenCohorts[`${row.userId}-${row.courseSlug}`] ?? row.preferredCohort ?? ""}
-                    onChange={(e) =>
-                      setChosenCohorts((prev) => ({
-                        ...prev,
-                        [`${row.userId}-${row.courseSlug}`]: e.target.value,
-                      }))
-                    }
-                    placeholder="cohort-id"
-                    className="mt-1 h-8 text-xs"
-                  />
-                )}
-              </td>
-              <td className="px-3 py-2 text-xs">
-                {new Date(row.requestedAt).toLocaleString()}
-              </td>
-              <td className="max-w-xs px-3 py-2 text-xs">
-                {row.message ?? "—"}
-              </td>
-              <td className="px-3 py-2">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-growth/60 text-growth hover:bg-growth/10"
-                    disabled={actionPending}
-                    onClick={() =>
-                      handleApprove(row.userId, row.courseSlug)
-                    }
+    <div className="space-y-4">
+      {courseSlugs.map((courseSlug) => {
+        const groupRows = groupedByCourse[courseSlug] ?? [];
+        return (
+          <div
+            key={courseSlug}
+            className="overflow-x-auto rounded-lg border border-border/80 bg-bg/30"
+          >
+            <div className="border-b border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-primary">
+              {courseSlug} ({groupRows.length})
+            </div>
+            <table className="min-w-full text-left text-sm text-text-secondary">
+              <thead>
+                <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-text-secondary">
+                  <th className="px-3 py-2">User</th>
+                  <th className="px-3 py-2">Email</th>
+                  <th className="px-3 py-2">Type</th>
+                  <th className="px-3 py-2">Requested</th>
+                  <th className="px-3 py-2">Message</th>
+                  <th className="px-3 py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupRows.map((row) => (
+                  <tr
+                    key={`${row.userId}-${row.courseSlug}-${row.requestedAt}`}
+                    className="border-b border-white/5 last:border-0"
                   >
-                    <Check className="mr-1 h-3 w-3" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-secondary/60 text-secondary hover:bg-secondary/10"
-                    disabled={actionPending}
-                    onClick={() =>
-                      handleReject(row.userId, row.courseSlug)
-                    }
-                  >
-                    <X className="mr-1 h-3 w-3" />
-                    Reject
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    <td className="px-3 py-2 text-text-primary">
+                      {row.name ?? "Unknown"}
+                    </td>
+                    <td className="px-3 py-2">{row.email ?? "—"}</td>
+                    <td className="px-3 py-2 text-xs">
+                      <Select
+                        value={
+                          chosenTypes[`${row.userId}-${row.courseSlug}`] ??
+                          row.enrollmentType ??
+                          "subscription"
+                        }
+                        onChange={(e) =>
+                          setChosenTypes((prev) => ({
+                            ...prev,
+                            [`${row.userId}-${row.courseSlug}`]:
+                              e.target.value === "cohort" ? "cohort" : "subscription",
+                          }))
+                        }
+                      >
+                        <option value="subscription">subscription</option>
+                        <option value="cohort">cohort</option>
+                      </Select>
+                      {(chosenTypes[`${row.userId}-${row.courseSlug}`] ??
+                        row.enrollmentType) === "cohort" && (
+                        <Input
+                          value={
+                            chosenCohorts[`${row.userId}-${row.courseSlug}`] ??
+                            row.preferredCohort ??
+                            ""
+                          }
+                          onChange={(e) =>
+                            setChosenCohorts((prev) => ({
+                              ...prev,
+                              [`${row.userId}-${row.courseSlug}`]: e.target.value,
+                            }))
+                          }
+                          placeholder="cohort-id"
+                          className="mt-1 h-8 text-xs"
+                        />
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      {new Date(row.requestedAt).toLocaleString()}
+                    </td>
+                    <td className="max-w-xs px-3 py-2 text-xs">
+                      {row.message ?? "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-growth/60 text-growth hover:bg-growth/10"
+                          disabled={actionPending}
+                          onClick={() =>
+                            handleApprove(row.userId, row.courseSlug)
+                          }
+                        >
+                          <Check className="mr-1 h-3 w-3" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-secondary/60 text-secondary hover:bg-secondary/10"
+                          disabled={actionPending}
+                          onClick={() =>
+                            handleReject(row.userId, row.courseSlug)
+                          }
+                        >
+                          <X className="mr-1 h-3 w-3" />
+                          Reject
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
     </div>
   );
 }

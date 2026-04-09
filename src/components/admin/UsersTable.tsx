@@ -12,9 +12,13 @@ type AdminUserRow = Awaited<ReturnType<typeof adminListUsers>>[number];
 function resolveCourseSlugToRemove(
   row: AdminUserRow,
   selection: Record<string, string>,
+  preferredCourseSlug?: string,
 ): string {
   const pref = selection[row.id];
   if (pref && row.enrolledCourses.includes(pref)) return pref;
+  if (preferredCourseSlug && row.enrolledCourses.includes(preferredCourseSlug)) {
+    return preferredCourseSlug;
+  }
   return row.enrolledCourses[0] ?? "";
 }
 
@@ -111,6 +115,156 @@ export function UsersTable() {
     );
   }
 
+  const usersByCourse = new Map<string, AdminUserRow[]>();
+  for (const row of filtered) {
+    for (const slug of row.enrolledCourses) {
+      if (!usersByCourse.has(slug)) usersByCourse.set(slug, []);
+      usersByCourse.get(slug)!.push(row);
+    }
+  }
+  const courseSlugs = Array.from(usersByCourse.keys()).sort((a, b) =>
+    a.localeCompare(b),
+  );
+  const unenrolledUsers = filtered.filter((row) => row.enrolledCourses.length === 0);
+
+  const renderGroupTable = (groupRows: AdminUserRow[], groupSlug?: string) => (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-left text-sm text-text-secondary">
+        <thead>
+          <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-text-secondary">
+            <th className="px-3 py-2">Name</th>
+            <th className="px-3 py-2">Email</th>
+            <th className="px-3 py-2">Role</th>
+            <th className="px-3 py-2">Enrolled</th>
+            <th className="px-3 py-2">Pending</th>
+            <th className="px-3 py-2">Progress</th>
+            <th className="px-3 py-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {groupRows.map((row) => (
+            <tr
+              key={groupSlug ? `${groupSlug}-${row.id}` : row.id}
+              className="border-b border-white/5 last:border-0"
+            >
+              <td className="px-3 py-2 text-text-primary">
+                {row.name ?? "Unknown"}
+              </td>
+              <td className="px-3 py-2">{row.email ?? "—"}</td>
+              <td className="px-3 py-2 text-xs">
+                {row.role ?? "student"}
+              </td>
+              <td className="px-3 py-2 text-xs">
+                {row.enrolledCourses.length === 0 ? (
+                  "—"
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {row.enrolledCourses.map((c) => {
+                      const enrollmentType =
+                        row.enrollmentTypes[c] ?? "subscription";
+                      const cohortId = row.cohortAssignments[c];
+                      return (
+                        <span
+                          key={c}
+                          className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary"
+                        >
+                          {c} • {enrollmentType}
+                          {enrollmentType === "cohort" && cohortId
+                            ? ` • ${cohortId}`
+                            : ""}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </td>
+              <td className="px-3 py-2 text-xs">
+                {row.pendingEnrollments.length === 0
+                  ? "0"
+                  : row.pendingEnrollments
+                      .map((p) => p.courseSlug)
+                      .join(", ")}
+              </td>
+              <td className="px-3 py-2 text-xs">
+                {Object.keys(row.progressSummary).length === 0
+                  ? "—"
+                  : Object.entries(row.progressSummary)
+                      .map(
+                        ([slug, p]) =>
+                          `${slug}: ${p.completedTopics} topics, ${p.completedWeeks} weeks`,
+                      )
+                      .join(" • ")}
+              </td>
+              <td className="px-3 py-2">
+                <div className="flex flex-col items-end justify-end gap-2 sm:flex-row sm:items-center">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-secondary/60 text-secondary hover:bg-secondary/10"
+                    onClick={() =>
+                      router.push(`/admin/users/${row.id}`)
+                    }
+                  >
+                    Details
+                  </Button>
+                  {row.enrolledCourses.length > 0 && (
+                    <>
+                      <label
+                        htmlFor={`remove-course-${row.id}`}
+                        className="sr-only"
+                      >
+                        Select course to remove for {row.name ?? "user"}
+                      </label>
+                      <Select
+                        id={`remove-course-${row.id}`}
+                        value={resolveCourseSlugToRemove(
+                          row,
+                          courseToRemoveByUser,
+                          groupSlug,
+                        )}
+                        onChange={(e) =>
+                          setCourseToRemoveByUser((prev) => ({
+                            ...prev,
+                            [row.id]: e.target.value,
+                          }))
+                        }
+                        className="h-8 max-w-[200px] text-[11px]"
+                      >
+                        {row.enrolledCourses.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </Select>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-destructive/60 text-destructive hover:bg-destructive/10"
+                        disabled={isPending}
+                        onClick={() =>
+                          handleRemoveCourse(
+                            row.id,
+                            resolveCourseSlugToRemove(
+                              row,
+                              courseToRemoveByUser,
+                              groupSlug,
+                            ),
+                          )
+                        }
+                      >
+                        Remove course
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -125,138 +279,26 @@ export function UsersTable() {
         </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm text-text-secondary">
-          <thead>
-            <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-text-secondary">
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">Role</th>
-              <th className="px-3 py-2">Enrolled</th>
-              <th className="px-3 py-2">Pending</th>
-              <th className="px-3 py-2">Progress</th>
-              <th className="px-3 py-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-white/5 last:border-0"
-              >
-                <td className="px-3 py-2 text-text-primary">
-                  {row.name ?? "Unknown"}
-                </td>
-                <td className="px-3 py-2">{row.email ?? "—"}</td>
-                <td className="px-3 py-2 text-xs">
-                  {row.role ?? "student"}
-                </td>
-                <td className="px-3 py-2 text-xs">
-                  {row.enrolledCourses.length === 0 ? (
-                    "—"
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {row.enrolledCourses.map((c) => {
-                        const enrollmentType =
-                          row.enrollmentTypes[c] ?? "subscription";
-                        const cohortId = row.cohortAssignments[c];
-                        return (
-                        <span
-                          key={c}
-                          className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary"
-                        >
-                          {c} • {enrollmentType}
-                          {enrollmentType === "cohort" && cohortId
-                            ? ` • ${cohortId}`
-                            : ""}
-                        </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-xs">
-                  {row.pendingEnrollments.length === 0
-                    ? "0"
-                    : row.pendingEnrollments
-                        .map((p) => p.courseSlug)
-                        .join(", ")}
-                </td>
-                <td className="px-3 py-2 text-xs">
-                  {Object.keys(row.progressSummary).length === 0
-                    ? "—"
-                    : Object.entries(row.progressSummary)
-                        .map(
-                          ([slug, p]) =>
-                            `${slug}: ${p.completedTopics} topics, ${p.completedWeeks} weeks`,
-                        )
-                        .join(" • ")}
-                </td>
-                <td className="px-3 py-2">
-                  <div className="flex flex-col items-end justify-end gap-2 sm:flex-row sm:items-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-secondary/60 text-secondary hover:bg-secondary/10"
-                      onClick={() =>
-                        router.push(`/admin/users/${row.id}`)
-                      }
-                    >
-                      Details
-                    </Button>
-                    {row.enrolledCourses.length > 0 && (
-                      <>
-                        <label
-                          htmlFor={`remove-course-${row.id}`}
-                          className="sr-only"
-                        >
-                          Select course to remove for {row.name ?? "user"}
-                        </label>
-                        <Select
-                          id={`remove-course-${row.id}`}
-                          value={resolveCourseSlugToRemove(
-                            row,
-                            courseToRemoveByUser,
-                          )}
-                          onChange={(e) =>
-                            setCourseToRemoveByUser((prev) => ({
-                              ...prev,
-                              [row.id]: e.target.value,
-                            }))
-                          }
-                          className="h-8 max-w-[200px] text-[11px]"
-                        >
-                          {row.enrolledCourses.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </Select>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-destructive/60 text-destructive hover:bg-destructive/10"
-                          disabled={isPending}
-                          onClick={() =>
-                            handleRemoveCourse(
-                              row.id,
-                              resolveCourseSlugToRemove(
-                                row,
-                                courseToRemoveByUser,
-                              ),
-                            )
-                          }
-                        >
-                          Remove course
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-4">
+        {courseSlugs.map((slug) => (
+          <div
+            key={slug}
+            className="rounded-lg border border-border/80 bg-bg/30"
+          >
+            <div className="border-b border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-primary">
+              {slug} ({usersByCourse.get(slug)?.length ?? 0})
+            </div>
+            {renderGroupTable(usersByCourse.get(slug) ?? [], slug)}
+          </div>
+        ))}
+        {unenrolledUsers.length > 0 && (
+          <div className="rounded-lg border border-border/80 bg-bg/30">
+            <div className="border-b border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+              Unenrolled users ({unenrolledUsers.length})
+            </div>
+            {renderGroupTable(unenrolledUsers)}
+          </div>
+        )}
       </div>
     </div>
   );
