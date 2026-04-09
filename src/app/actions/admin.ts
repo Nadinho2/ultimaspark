@@ -18,6 +18,7 @@ import {
   persistErrorMessage,
 } from "@/lib/course-store";
 import { ADMIN_ROLE_HELP, userHasAdminRole } from "@/lib/admin-role";
+import { normalizeEnrolledCourseSlugs } from "@/lib/course-enrollment";
 import { listAllClerkUsers } from "@/lib/clerk-list-all-users";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -26,6 +27,32 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 type AdminResult =
   | { success: true; message?: string }
   | { success: false; error: string };
+
+/**
+ * Clerk `publicMetadata.enrolledCourses` should be string[], but manual edits or
+ * older writes may store comma-separated text; normalize for admin UI.
+ */
+function enrolledCoursesFromMetadata(raw: unknown): string[] {
+  const fromArray = normalizeEnrolledCourseSlugs(raw);
+  if (fromArray.length > 0) return fromArray;
+  if (typeof raw === "string") {
+    const t = raw.trim();
+    if (!t) return [];
+    if (t.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(t) as unknown;
+        return normalizeEnrolledCourseSlugs(parsed);
+      } catch {
+        return [];
+      }
+    }
+    return t
+      .split(/[\s,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
 
 async function requireAdmin() {
   const { userId } = await auth();
@@ -183,8 +210,9 @@ export async function adminListUsers() {
       (u.publicMetadata.role as string | undefined) ??
       ((u.unsafeMetadata as any)?.role as string | undefined) ??
       null;
-    const enrolled =
-      (u.publicMetadata.enrolledCourses as string[] | undefined) ?? [];
+    const enrolled = enrolledCoursesFromMetadata(
+      u.publicMetadata.enrolledCourses,
+    );
     const pending =
       (u.publicMetadata.pendingEnrollments as
         | {

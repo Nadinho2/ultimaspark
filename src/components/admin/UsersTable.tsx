@@ -22,6 +22,15 @@ function resolveCourseSlugToRemove(
   return row.enrolledCourses[0] ?? "";
 }
 
+/** Slugs to show under each course section (enrollments + type assignments). */
+function slugsForCourseGrouping(row: AdminUserRow): string[] {
+  const set = new Set<string>(row.enrolledCourses);
+  for (const slug of Object.keys(row.enrollmentTypes)) {
+    if (slug.trim()) set.add(slug);
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
 export function UsersTable() {
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [filtered, setFiltered] = useState<AdminUserRow[]>([]);
@@ -117,7 +126,7 @@ export function UsersTable() {
 
   const usersByCourse = new Map<string, AdminUserRow[]>();
   for (const row of filtered) {
-    for (const slug of row.enrolledCourses) {
+    for (const slug of slugsForCourseGrouping(row)) {
       if (!usersByCourse.has(slug)) usersByCourse.set(slug, []);
       usersByCourse.get(slug)!.push(row);
     }
@@ -125,7 +134,9 @@ export function UsersTable() {
   const courseSlugs = Array.from(usersByCourse.keys()).sort((a, b) =>
     a.localeCompare(b),
   );
-  const unenrolledUsers = filtered.filter((row) => row.enrolledCourses.length === 0);
+  const unenrolledUsers = filtered.filter(
+    (row) => slugsForCourseGrouping(row).length === 0,
+  );
 
   const renderGroupTable = (groupRows: AdminUserRow[], groupSlug?: string) => (
     <div className="overflow-x-auto">
@@ -155,7 +166,33 @@ export function UsersTable() {
                 {row.role ?? "student"}
               </td>
               <td className="px-3 py-2 text-xs">
-                {row.enrolledCourses.length === 0 ? (
+                {groupSlug ? (
+                  <div className="space-y-1">
+                    <span className="inline-flex rounded-full border border-growth/40 bg-growth/10 px-2 py-0.5 text-[10px] font-semibold text-growth">
+                      {groupSlug} •{" "}
+                      {row.enrollmentTypes[groupSlug] ?? "subscription"}
+                      {(row.enrollmentTypes[groupSlug] ?? "subscription") ===
+                        "cohort" && row.cohortAssignments[groupSlug]
+                        ? ` • ${row.cohortAssignments[groupSlug]}`
+                        : ""}
+                    </span>
+                    {!row.enrolledCourses.includes(groupSlug) && (
+                      <p className="text-[10px] text-spark">
+                        Enrollment type set, but this slug is missing from
+                        Clerk enrolledCourses — re-save or approve again.
+                      </p>
+                    )}
+                    {row.enrolledCourses.filter((c) => c !== groupSlug).length >
+                      0 && (
+                      <p className="text-[10px] text-text-secondary">
+                        Also enrolled:{" "}
+                        {row.enrolledCourses
+                          .filter((c) => c !== groupSlug)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                ) : row.enrolledCourses.length === 0 ? (
                   "—"
                 ) : (
                   <div className="flex flex-wrap gap-1">
@@ -210,13 +247,21 @@ export function UsersTable() {
                   {row.enrolledCourses.length > 0 && (
                     <>
                       <label
-                        htmlFor={`remove-course-${row.id}`}
+                        htmlFor={
+                          groupSlug
+                            ? `remove-course-${groupSlug}-${row.id}`
+                            : `remove-course-unenrolled-${row.id}`
+                        }
                         className="sr-only"
                       >
                         Select course to remove for {row.name ?? "user"}
                       </label>
                       <Select
-                        id={`remove-course-${row.id}`}
+                        id={
+                          groupSlug
+                            ? `remove-course-${groupSlug}-${row.id}`
+                            : `remove-course-unenrolled-${row.id}`
+                        }
                         value={resolveCourseSlugToRemove(
                           row,
                           courseToRemoveByUser,
