@@ -16,12 +16,6 @@ function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
-export const metadata = {
-  title: "AI Automation Agency — WhatsApp, Instagram & Catalog",
-  description:
-    "We build AI automation systems that reply to every WhatsApp message and Instagram comment 24/7. Setup in 5 days. Cancel anytime.",
-};
-
 function StickyNav() {
   return (
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0A1628]/90 backdrop-blur">
