@@ -15,6 +15,21 @@ const links: { href: string; label: string; match: (path: string) => boolean }[]
         p.startsWith("/admin/users"),
     },
     {
+      href: "/admin/leads",
+      label: "Leads",
+      match: (p) => p === "/admin/leads" || p.startsWith("/admin/leads/"),
+    },
+    {
+      href: "/admin/email",
+      label: "Email",
+      match: (p) => p === "/admin/email" || p.startsWith("/admin/email/"),
+    },
+    {
+      href: "/admin/clients",
+      label: "Clients",
+      match: (p) => p === "/admin/clients" || p.startsWith("/admin/clients/"),
+    },
+    {
       href: "/admin/subscription",
       label: "Subscription videos",
       match: (p) => p === "/admin/subscription" || p.startsWith("/admin/subscription/"),

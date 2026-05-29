@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { PendingApprovals } from "@/components/admin/PendingApprovals";
 import { UsersTable } from "@/components/admin/UsersTable";
+import { AgencyStatsCards, RecentLeadsTable } from "@/components/admin/AgencyOverview";
 
 export const metadata = {
   title: "Students",
@@ -16,6 +17,22 @@ export const metadata = {
 export default function AdminHomePage() {
   return (
     <div className="space-y-8">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AgencyStatsCards />
+      </div>
+
+      <Card className="border border-border bg-surface shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-primary">Recent Leads</CardTitle>
+          <CardDescription className="text-text-secondary">
+            Latest agency and academy leads.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RecentLeadsTable />
+        </CardContent>
+      </Card>
+
       <header>
         <h2 className="text-xl font-semibold text-primary sm:text-2xl">
           Students &amp; enrollments
