@@ -5,6 +5,8 @@ import { useState } from "react";
 
 const DISCOVERY_CALL_LINK = "https://calendly.com/ultimaspark/discovery";
 const WHATSAPP_LINK = "https://wa.me/234XXXXXXXXXX?text=Hi%2C%20I%27d%20like%20to%20automate%20my%20sales";
+const FULLSTACK_WHATSAPP_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20the%20Full%20Stack%20package";
 
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -256,6 +258,7 @@ export default function AgencyPage() {
               ],
               notIncluded: ["Auto-DM", "Catalog Website", "Dashboard"],
               popular: false,
+              ctaLink: DISCOVERY_CALL_LINK,
             },
             {
               name: "Growth",
@@ -271,6 +274,7 @@ export default function AgencyPage() {
               ],
               notIncluded: ["Catalog Website", "Dashboard"],
               popular: true,
+              ctaLink: DISCOVERY_CALL_LINK,
             },
             {
               name: "Full Stack",
@@ -287,6 +291,7 @@ export default function AgencyPage() {
               ],
               notIncluded: [],
               popular: false,
+              ctaLink: FULLSTACK_WHATSAPP_LINK,
             },
           ].map((plan) => (
             <div
@@ -323,9 +328,10 @@ export default function AgencyPage() {
                 ))}
               </ul>
 
-              <button
-                type="button"
-                onClick={() => scrollToSection("cta-final")}
+              <a
+                href={plan.ctaLink}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
                   plan.popular
                     ? "bg-[#00C9B1] text-[#0D1B5E] hover:bg-[#00b4a0]"
@@ -333,7 +339,7 @@ export default function AgencyPage() {
                 }`}
               >
                 Get Started →
-              </button>
+              </a>
             </div>
           ))}
         </div>
