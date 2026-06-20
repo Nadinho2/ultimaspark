@@ -326,8 +326,8 @@ export default function AgencyPage() {
             {
               name: "Full Stack",
               tag: "Complete website + automation",
-              setup: "₦600,000",
-              retainer: "+ ₦80,000–₦120,000/month",
+              setup: "From ₦600,000",
+              retainer: "From ₦25,000/month",
               included: [
                 "Everything in Growth",
                 "Full e-commerce store with WhatsApp checkout",
