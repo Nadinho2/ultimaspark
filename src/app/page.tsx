@@ -54,51 +54,135 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ACADEMY SECTION */}
-      <section className="py-12 sm:py-16 lg:py-20">
-
-      {courses.length > 0 && (
-        <div className="mt-12 grid gap-8 md:grid-cols-2">
-          {courses.map((course) => {
-            const href = `/courses/${course.slug}`;
-
-            return (
-              <div
-                key={course.slug}
-                className="group transform rounded-xl border border-border bg-surface p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+      {/* AGENCY + ACADEMY CARDS */}
+      <section className="mx-auto max-w-6xl px-4 py-16 md:py-20">
+        <div className="grid gap-8 md:grid-cols-2">
+          {/* AGENCY CARD */}
+          <div className="group rounded-2xl border border-[#00C9B1]/20 bg-[#0D1B5E]/30 p-8 transition hover:border-[#00C9B1]/50 hover:shadow-[0_0_40px_rgba(0,201,177,0.06)]">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#00C9B1]/10">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">UltimaSpark Agency</h2>
+            <p className="mt-3 text-sm leading-relaxed text-gray-400">
+              We build AI automation systems that reply to every WhatsApp message
+              and Instagram comment — 24/7 — so Nigerian SME sellers never miss a
+              sale again. Setup in days. Cancel anytime.
+            </p>
+            <ul className="mt-5 space-y-2">
+              {[
+                "WhatsApp AI Chatbot — 24/7 auto-replies",
+                "Instagram & Facebook Comment Auto-DM",
+                "Product Catalog Website with WhatsApp checkout",
+                "Lead Management Dashboard",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-gray-300">
+                  <span className="mt-0.5 text-[#00C9B1]">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/agency"
+                className="inline-flex items-center justify-center rounded-full bg-[#00C9B1] px-6 py-2.5 text-sm font-semibold text-[#0D1B5E] transition hover:bg-[#00b4a0]"
               >
-                <h2 className="text-2xl font-semibold text-primary sm:text-3xl">
-                  {course.title}
-                </h2>
-                <p className="mt-4 text-sm text-text-secondary sm:text-base">
-                  {course.description}
-                </p>
-                <Link
-                  href={href}
-                  className="mt-6 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary/90"
-                >
-                  Explore Course
-                </Link>
-              </div>
-            );
-          })}
+                Explore Agency Services →
+              </Link>
+              <a
+                href={CALENDAR_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-2.5 text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
+              >
+                Book a Free Discovery Call
+              </a>
+            </div>
+          </div>
+
+          {/* ACADEMY CARD */}
+          <div className="group rounded-2xl border border-white/10 bg-surface p-8 transition hover:border-primary/40 hover:shadow-[0_0_40px_rgba(251,191,36,0.04)]">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+              <span className="text-2xl">🎓</span>
+            </div>
+            <h2 className="text-2xl font-bold text-primary">UltimaSpark Academy</h2>
+            <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+              Master cutting-edge skills through intensive cohorts and hands-on,
+              project-based learning — built for the next generation of creators
+              and AI builders.
+            </p>
+            <ul className="mt-5 space-y-2">
+              {[
+                "Intensive 6-week cohort programs",
+                "Hands-on, project-based learning",
+                "AI automation & vibe coding skills",
+                "Eye-friendly sessions with clear progress",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-text-secondary">
+                  <span className="mt-0.5 text-growth">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/courses"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary/90"
+              >
+                Explore Courses →
+              </Link>
+              <Link
+                href="/our-goals"
+                className="inline-flex items-center justify-center rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-text-primary transition hover:border-spark hover:text-spark"
+              >
+                View Our Goals
+              </Link>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* COURSE CARDS (inside Academy context) */}
+      {courses.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 pb-8">
+          <div className="mb-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-spark">
+              Academy Courses
+            </p>
+            <h3 className="mt-2 text-xl font-bold text-primary">
+              Available programs
+            </h3>
+          </div>
+          <div className="grid gap-8 md:grid-cols-2">
+            {courses.map((course) => {
+              const href = `/courses/${course.slug}`;
+              return (
+                <div
+                  key={course.slug}
+                  className="group transform rounded-xl border border-border bg-surface p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <h2 className="text-2xl font-semibold text-primary sm:text-3xl">
+                    {course.title}
+                  </h2>
+                  <p className="mt-4 text-sm text-text-secondary sm:text-base">
+                    {course.description}
+                  </p>
+                  <Link
+                    href={href}
+                    className="mt-6 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary/90"
+                  >
+                    Explore Course
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      <div className="mt-16">
+      {/* TESTIMONIALS — shared across both */}
+      <div className="mx-auto max-w-6xl px-4 py-8">
         <Testimonials />
       </div>
-
-      <div className="mt-10 flex justify-center">
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-lg border border-border bg-surface px-7 py-2.5 text-sm font-medium text-text-primary shadow-sm transition hover:border-spark hover:text-spark"
-        >
-          Join the Waitlist
-        </button>
-      </div>
-    </section>
     </>
   );
 }
-
