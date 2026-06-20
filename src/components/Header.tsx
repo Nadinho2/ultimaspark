@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export function Header() {
   const { user } = useUser();
@@ -25,15 +25,7 @@ export function Header() {
           className="flex items-center gap-1 md:gap-2"
           aria-label="UltimaSpark Academy home"
         >
-          <Image
-            src="/ultimaspark-logo.png"
-            alt="UltimaSpark Academy"
-            width={320}
-            height={96}
-            sizes="(max-width: 768px) 200px, 260px"
-            className="h-8 w-auto max-h-9 max-w-[200px] object-contain object-left md:h-9 md:max-h-10 md:max-w-[260px]"
-            priority
-          />
+          <Logo />
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-text-secondary md:flex">

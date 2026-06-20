@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   },
   description:
     "UltimaSpark Academy is a modern learning studio for AI automation, vibe coding, and builder-first cohorts. Ship real projects in focused 6-week programs.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout(

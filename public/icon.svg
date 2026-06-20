@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="favicon-grad" x1="4" y1="2" x2="28" y2="30">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <!-- Spark / flame icon -->
+  <path
+    d="M16 2C10 12 6 17 6 22a10 10 0 0 0 20 0c0-5-4-10-10-20Z"
+    fill="url(#favicon-grad)"
+  />
+  <path
+    d="M16 12c-2 4-3.5 6.5-3.5 9a3.5 3.5 0 0 0 7 0c0-2.5-1.5-5-3.5-9Z"
+    fill="#0A0A1A"
+    opacity="0.3"
+  />
+  <!-- Inner spark core -->
+  <path
+    d="M16 14l-2 4h1.5l-.5 3 3-4h-1.5l1-3z"
+    fill="#0A0A1A"
+  />
+</svg>

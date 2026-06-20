@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FooterNewsletterForm } from "./FooterNewsletterForm";
+import { Logo } from "./Logo";
 
 export function Footer() {
   return (
@@ -8,15 +9,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-3">
           <div className="space-y-3">
             <Link href="/" className="inline-flex items-center gap-2">
-              <span className="text-lg font-bold tracking-tight text-primary">
-                Ultima
-              </span>
-              <span className="bg-gradient-to-r from-primary to-spark bg-clip-text text-lg font-bold tracking-tight text-transparent">
-                Spark
-              </span>
-              <span className="text-sm font-medium text-text-secondary">
-                Academy
-              </span>
+              <Logo />
             </Link>
             <p className="max-w-sm text-sm text-text-secondary">
               Builder-first cohorts for AI automation, vibe coding, and modern creation.
