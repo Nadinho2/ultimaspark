@@ -2,7 +2,7 @@ import * as React from "react";
 import { Heading, Img, Section, Text } from "@react-email/components";
 
 const primary = "#7C3AED";
-const spark = "#F59E0B";
+const spark = "#00C9B1";
 
 export function EmailHeader() {
   return (

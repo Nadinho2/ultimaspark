@@ -13,10 +13,10 @@ export default async function Home() {
       {/* ACADEMY HERO */}
       <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-1/4 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-spark/10 blur-[140px]" />
+          <div className="absolute left-1/2 top-1/4 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00C9B1]/8 blur-[140px]" />
         </div>
         <div className="text-center">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-spark to-growth p-0.5 shadow-lg shadow-spark/20">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00C9B1] to-[#059669] p-0.5 shadow-lg shadow-[#00C9B1]/20">
             <div className="flex h-full w-full items-center justify-center rounded-[11px] bg-bg">
               <svg
                 viewBox="0 0 24 24"
@@ -33,8 +33,8 @@ export default async function Home() {
                 />
                 <defs>
                   <linearGradient id="spark-gradient" x1="4" y1="2" x2="21" y2="22">
-                    <stop stopColor="#F59E0B" />
-                    <stop offset="1" stopColor="#10B981" />
+                    <stop stopColor="#00C9B1" />
+                    <stop offset="1" stopColor="#059669" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -42,7 +42,7 @@ export default async function Home() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl xl:text-6xl">
             Ignite Your Future with{" "}
-            <span className="bg-gradient-to-r from-spark to-growth bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#00C9B1] to-[#059669] bg-clip-text text-transparent">
               UltimaSpark Academy
             </span>
           </h1>
@@ -54,7 +54,7 @@ export default async function Home() {
             <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-secondary">
               AI automation
             </span>
-            <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-spark">
+            <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-[#00C9B1]">
               Vibe coding
             </span>
             <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-growth">
@@ -70,7 +70,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/our-goals"
-              className="inline-flex items-center justify-center rounded-lg border border-border px-8 py-3 text-sm font-medium text-text-primary transition hover:border-spark hover:text-spark"
+              className="inline-flex items-center justify-center rounded-lg border border-border px-8 py-3 text-sm font-medium text-text-primary transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
             >
               Our Goals
             </Link>
@@ -113,7 +113,7 @@ export default async function Home() {
                 Explore Agency Services →
               </Link>
               <a
-                href={CALENDAR_LINK}
+                href={WHATSAPP_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-2.5 text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
@@ -124,7 +124,7 @@ export default async function Home() {
           </div>
 
           {/* ACADEMY CARD */}
-          <div className="group rounded-2xl border border-white/10 bg-surface p-8 transition hover:border-primary/40 hover:shadow-[0_0_40px_rgba(251,191,36,0.04)]">
+          <div className="group rounded-2xl border border-white/10 bg-surface p-8 transition hover:border-primary/40 hover:shadow-[0_0_40px_rgba(0,201,177,0.04)]">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
               <span className="text-2xl">🎓</span>
             </div>
@@ -156,7 +156,7 @@ export default async function Home() {
               </Link>
               <Link
                 href="/our-goals"
-                className="inline-flex items-center justify-center rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-text-primary transition hover:border-spark hover:text-spark"
+                className="inline-flex items-center justify-center rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-text-primary transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
               >
                 View Our Goals
               </Link>

@@ -36,7 +36,7 @@ export default function NewVideoAdded({
     <EmailLayout preview={preview}>
       <Section
         style={{
-          background: "linear-gradient(to right, #F59E0B, #7C3AED)",
+          background: "linear-gradient(to right, #00C9B1, #7C3AED)",
           padding: "42px 18px 22px",
           textAlign: "center",
           borderTopLeftRadius: 16,
@@ -92,8 +92,8 @@ export default function NewVideoAdded({
           A new video{" "}
           <span
             style={{
-              backgroundColor: "rgba(245,158,11,0.14)",
-              border: "1px solid rgba(245,158,11,0.25)",
+              backgroundColor: "rgba(0,201,177,0.14)",
+              border: "1px solid rgba(0,201,177,0.25)",
               color: "#111827",
               padding: "2px 8px",
               borderRadius: 999,
@@ -113,8 +113,8 @@ export default function NewVideoAdded({
           <Button
             href={videoLink}
             style={{
-              background: "#F59E0B",
-              color: "#111827",
+              background: "#00C9B1",
+              color: "#0D1B5E",
               padding: "16px 30px",
               borderRadius: 10,
               textDecoration: "none",

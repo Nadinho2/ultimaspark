@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Hr, Link, Section, Text } from "@react-email/components";
 
-const spark = "#F59E0B";
+const spark = "#00C9B1";
 
 export function EmailFooter() {
   return (

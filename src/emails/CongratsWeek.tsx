@@ -35,7 +35,7 @@ export default function CongratsWeek({
     >
       <Section
         style={{
-          background: "linear-gradient(to right, #7C3AED, #F59E0B)",
+          background: "linear-gradient(to right, #7C3AED, #00C9B1)",
           padding: "40px 20px",
           textAlign: "center",
         }}
@@ -93,8 +93,8 @@ export default function CongratsWeek({
             href="https://ultimaspark.com/dashboard"
             className="email-cta"
             style={{
-              background: "#F59E0B",
-              color: "#111827",
+              background: "#00C9B1",
+              color: "#0D1B5E",
               padding: "16px 32px",
               borderRadius: "8px",
               textDecoration: "none",

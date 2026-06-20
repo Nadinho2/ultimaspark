@@ -21,7 +21,7 @@ function normalizeEmail(email: string | null): string | null {
 
 function newsletterHtml({ email }: { email: string }) {
   const primary = "#7C3AED";
-  const spark = "#F59E0B";
+  const spark = "#00C9B1";
   const bg = "#F9FAFB";
   const text = "#111827";
 

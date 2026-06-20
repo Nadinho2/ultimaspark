@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-const DISCOVERY_CALL_LINK = "https://calendly.com/ultimaspark/discovery";
+const DISCOVERY_CALL_LINK = "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20get%20started%20with%20UltimaSpark";
 const WHATSAPP_LINK = "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20automate%20my%20sales";
 const FULLSTACK_WHATSAPP_LINK =
   "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20the%20Full%20Stack%20package";
@@ -37,7 +37,7 @@ function BookCallCta({ variant = "primary" }: { variant?: "primary" | "outline" 
         rel="noopener noreferrer"
         className="inline-flex rounded-full border border-white/30 px-7 py-3 text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
       >
-        Book a Free Discovery Call →
+        Get Started on WhatsApp →
       </a>
     );
   }
@@ -48,7 +48,7 @@ function BookCallCta({ variant = "primary" }: { variant?: "primary" | "outline" 
       rel="noopener noreferrer"
       className="inline-flex rounded-full bg-[#00C9B1] px-7 py-3 text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0]"
     >
-      Book a Free Discovery Call →
+      Get Started on WhatsApp →
     </a>
   );
 }
@@ -101,7 +101,7 @@ export default function AgencyPage() {
             rel="noopener noreferrer"
             className="rounded-full bg-[#00C9B1] px-7 py-3 text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0]"
           >
-            Book a Free Discovery Call →
+            Get Started on WhatsApp →
           </a>
           <button
             type="button"
@@ -275,7 +275,7 @@ export default function AgencyPage() {
             {
               name: "Website Only",
               tag: "Best for: businesses that just need a professional site",
-              setup: "₦80,000 – ₦150,000",
+              setup: "₦80,000 – ₦500,000",
               retainer: "+ ₦15,000/month hosting & maintenance",
               included: [
                 "Professional website (up to 5 pages)",
@@ -291,7 +291,7 @@ export default function AgencyPage() {
             {
               name: "Starter",
               tag: "Best for: sellers who want 24/7 replies",
-              setup: "From ₦70,000",
+              setup: "From ₦200,000",
               retainer: "+ ₦30,000–₦40,000/month",
               included: [
                 "WhatsApp AI Chatbot (24/7)",
@@ -309,7 +309,7 @@ export default function AgencyPage() {
             {
               name: "Growth",
               tag: "Best for: combining a website with automation",
-              setup: "From ₦150,000",
+              setup: "From ₦300,000",
               retainer: "+ ₦45,000–₦60,000/month",
               included: [
                 "Everything in Starter",
@@ -458,10 +458,10 @@ export default function AgencyPage() {
             rel="noopener noreferrer"
             className="w-full rounded-full bg-[#00C9B1] px-8 py-3.5 text-center text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0] sm:w-auto"
           >
-            Book Your Free Discovery Call →
+            Get Started on WhatsApp →
           </a>
           <a
-            href="https://wa.me/2349126914795"
+            href={WHATSAPP_LINK}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full rounded-full border border-white/30 px-8 py-3.5 text-center text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1] sm:w-auto"
