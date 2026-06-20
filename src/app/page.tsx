@@ -2,31 +2,60 @@ import Link from "next/link";
 import { getMarketingCourses } from "@/lib/courses";
 import Testimonials from "@/components/Testimonials";
 
+const CALENDAR_LINK = "https://calendly.com/ultimaspark/discovery";
+const WHATSAPP_LINK = "https://wa.me/2349126914795";
+
 export default async function Home() {
   const courses = await getMarketingCourses();
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
-          Ignite Your Future with UltimaSpark Academy
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base text-text-secondary sm:text-lg lg:text-xl">
-          Master cutting-edge skills through intensive cohorts and hands-on,
-          project-based learning — built for the next generation of creators.
-        </p>
-        <div className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-2">
-          <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-secondary">
-            Eye-friendly sessions
-          </span>
-          <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-spark">
-            Soft spark highlights
-          </span>
-          <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-growth">
-            Clear progress signals
-          </span>
+    <>
+      {/* AGENCY HERO */}
+      <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden bg-[#0D1B5E] px-4 pt-20 pb-16 md:min-h-screen md:pt-28 md:pb-20">
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute left-1/2 top-1/3 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00C9B1]/8 blur-[140px]" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0D1B5E] to-transparent" />
         </div>
-      </div>
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="mb-6 flex items-center justify-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00C9B1] text-lg">
+              💬
+            </span>
+            <span className="text-sm font-bold tracking-wider text-[#00C9B1]">
+              ULIMTASPARK
+            </span>
+          </div>
+          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+            We Build Websites and AI Automation Systems{" "}
+            <span className="text-[#00C9B1]">for African Businesses</span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg md:text-xl">
+            So you sell more, work less, and never miss a customer again.
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <a
+              href={CALENDAR_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full rounded-full bg-[#00C9B1] px-8 py-3.5 text-center text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0] sm:w-auto"
+            >
+              Book a Free Discovery Call →
+            </a>
+          </div>
+          <p className="mt-3 text-sm text-gray-400">20 minutes. No commitment.</p>
+          <a
+            href={WHATSAPP_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-block text-sm text-gray-400 underline-offset-2 transition hover:text-[#00C9B1] hover:underline"
+          >
+            Or chat with us on WhatsApp
+          </a>
+        </div>
+      </section>
+
+      {/* ACADEMY SECTION */}
+      <section className="py-12 sm:py-16 lg:py-20">
 
       {courses.length > 0 && (
         <div className="mt-12 grid gap-8 md:grid-cols-2">
@@ -69,6 +98,7 @@ export default async function Home() {
         </button>
       </div>
     </section>
+    </>
   );
 }
 
