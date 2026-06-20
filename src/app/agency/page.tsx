@@ -392,36 +392,32 @@ export default function AgencyPage() {
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section
-        id="cta-final"
-        className="px-4 py-16 text-center md:py-20"
-        style={{ background: "linear-gradient(135deg, #00C9B1 0%, #0D1B5E 100%)" }}
-      >
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Your competitors are already automating.
+      {/* FINAL CTA — Navy background */}
+      <section id="cta-final" className="bg-[#0D1B5E] px-4 py-20 text-center md:py-28">
+        <h2 className="text-2xl font-bold text-white sm:text-3xl md:text-4xl">
+          Every day without automation is a day of missed sales.
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-sm text-white/80 sm:text-base">
-          Let's build your AI sales system this week.
-        </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
             href={DISCOVERY_CALL_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-white px-7 py-3 text-sm font-semibold text-[#0D1B5E] transition hover:bg-gray-100"
+            className="w-full rounded-full bg-[#00C9B1] px-8 py-3.5 text-center text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0] sm:w-auto"
           >
-            Book a Free Discovery Call →
+            Book Your Free Discovery Call →
           </a>
           <a
-            href={WHATSAPP_LINK}
+            href="https://wa.me/2349126914795"
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border border-white/40 px-7 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+            className="w-full rounded-full border border-white/30 px-8 py-3.5 text-center text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1] sm:w-auto"
           >
-            Chat on WhatsApp →
+            Message Us on WhatsApp
           </a>
         </div>
+        <p className="mt-4 text-sm text-gray-400">
+          No commitment. No tech knowledge needed. Takes 20 minutes.
+        </p>
       </section>
 
       {/* FOOTER */}

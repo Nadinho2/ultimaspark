@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -49,6 +50,7 @@ export default function RootLayout(
             </div>
           </ThemeProvider>
         </ClerkProvider>
+        <FloatingWhatsApp />
       </body>
     </html>
   );
