@@ -270,13 +270,29 @@ export default function AgencyPage() {
           One-time setup fee. Monthly retainer invoiced after you go live. Cancel with 30 days notice.
         </p>
 
-        <div className="mx-auto mt-12 grid max-w-5xl items-start gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-6xl items-start gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
+              name: "Website Only",
+              tag: "Best for: businesses that just need a professional site",
+              setup: "₦80,000 – ₦150,000",
+              retainer: "+ ₦15,000/month hosting & maintenance",
+              included: [
+                "Professional website (up to 5 pages)",
+                "Mobile-first, WhatsApp-ready",
+                "Product catalog with WhatsApp order button",
+                "5-day setup",
+              ],
+              notIncluded: ["AI Chatbot", "Auto-DM", "Dashboard"],
+              popular: false,
+              premium: false,
+              ctaLink: DISCOVERY_CALL_LINK,
+            },
+            {
               name: "Starter",
-              tag: "Best for new sellers",
-              setup: "From ₦100,000",
-              retainer: "+ ₦45,000–₦60,000/month",
+              tag: "Best for: sellers who want 24/7 replies",
+              setup: "From ₦70,000",
+              retainer: "+ ₦30,000–₦40,000/month",
               included: [
                 "WhatsApp AI Chatbot (24/7)",
                 "Dedicated WhatsApp number",
@@ -287,39 +303,41 @@ export default function AgencyPage() {
               ],
               notIncluded: ["Auto-DM", "Catalog Website", "Dashboard"],
               popular: false,
+              premium: false,
               ctaLink: DISCOVERY_CALL_LINK,
             },
             {
               name: "Growth",
-              tag: "Best for running ads",
-              setup: "From ₦200,000",
-              retainer: "+ ₦55,000–₦80,000/month",
+              tag: "Best for: combining a website with automation",
+              setup: "From ₦150,000",
+              retainer: "+ ₦45,000–₦60,000/month",
               included: [
                 "Everything in Starter",
                 "Facebook & Instagram Auto-DM",
                 "Buying-intent detection",
-                "Auto catalog link in DMs",
+                "Product Catalog Website",
                 "7-day setup",
               ],
-              notIncluded: ["Catalog Website", "Dashboard"],
+              notIncluded: ["Dashboard"],
               popular: true,
+              premium: false,
               ctaLink: DISCOVERY_CALL_LINK,
             },
             {
               name: "Full Stack",
-              tag: "Complete automation",
-              setup: "From ₦400,000",
+              tag: "Complete website + automation",
+              setup: "₦600,000",
               retainer: "+ ₦80,000–₦120,000/month",
               included: [
                 "Everything in Growth",
-                "Product Catalog Website",
-                "WhatsApp checkout on every product",
+                "Full e-commerce store with WhatsApp checkout",
                 "Lead Management Dashboard",
                 "Priority support",
                 "10-day setup",
               ],
               notIncluded: [],
               popular: false,
+              premium: true,
               ctaLink: FULLSTACK_WHATSAPP_LINK,
             },
           ].map((plan) => (
@@ -328,7 +346,9 @@ export default function AgencyPage() {
               className={`relative rounded-xl border p-6 transition ${
                 plan.popular
                   ? "scale-[1.03] border-[#00C9B1] bg-[#0D1B5E]/60 shadow-[0_0_40px_rgba(0,201,177,0.12)]"
-                  : "border-white/10 bg-[#0D1B5E]/30"
+                  : plan.premium
+                    ? "border-[#00C9B1]/60 bg-[#0D1B5E]/40 shadow-[0_0_30px_rgba(0,201,177,0.15)]"
+                    : "border-white/10 bg-[#0D1B5E]/30"
               }`}
             >
               {plan.popular && (
@@ -336,9 +356,14 @@ export default function AgencyPage() {
                   Most Popular
                 </span>
               )}
+              {plan.premium && (
+                <span className="absolute -top-3 right-4 rounded-full border border-[#00C9B1]/60 bg-[#0D1B5E] px-3 py-1 text-xs font-bold text-[#00C9B1] shadow-lg">
+                  Flagship
+                </span>
+              )}
               <p className="text-xs font-semibold text-[#00C9B1]">{plan.tag}</p>
-              <h3 className="mt-2 text-xl font-bold text-white">{plan.name}</h3>
-              <p className="mt-2 text-2xl font-extrabold text-white">{plan.setup}</p>
+              <h3 className={`mt-2 font-bold text-white ${plan.premium ? "text-2xl" : "text-xl"}`}>{plan.name}</h3>
+              <p className={`mt-2 font-extrabold text-white ${plan.premium ? "text-3xl" : "text-2xl"}`}>{plan.setup}</p>
               <p className="text-xs text-gray-400">setup fee</p>
               <p className="mt-1 text-sm text-gray-400">{plan.retainer}</p>
 
@@ -362,7 +387,7 @@ export default function AgencyPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
-                  plan.popular
+                  plan.popular || plan.premium
                     ? "bg-[#00C9B1] text-[#0D1B5E] hover:bg-[#00b4a0]"
                     : "border border-white/20 text-white hover:border-[#00C9B1] hover:text-[#00C9B1]"
                 }`}
