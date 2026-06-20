@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 const DISCOVERY_CALL_LINK = "https://calendly.com/ultimaspark/discovery";
-const WHATSAPP_LINK = "https://wa.me/234XXXXXXXXXX?text=Hi%2C%20I%27d%20like%20to%20automate%20my%20sales";
+const WHATSAPP_LINK = "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20automate%20my%20sales";
 const FULLSTACK_WHATSAPP_LINK =
   "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20the%20Full%20Stack%20package";
 
@@ -84,11 +84,12 @@ export default function AgencyPage() {
           AI Automation for Sellers
         </p>
         <h1 className="mx-auto mt-4 max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          Never lose a sale to an unanswered message again
+          Websites &amp; AI automation that sell for you, 24/7
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
-          We build AI systems that reply to every WhatsApp and Instagram
-          message for you — 24/7 — so you wake up to orders, not questions.
+          We build beautiful product websites and AI systems that reply to
+          every WhatsApp and Instagram message — so you wake up to orders,
+          not questions.
         </p>
         <p className="mx-auto mt-3 max-w-xl text-sm text-gray-400">
           Setup in days. No tech skills needed. Cancel anytime.
@@ -161,18 +162,18 @@ export default function AgencyPage() {
             },
             {
               step: "02",
-              title: "We build your automation",
-              desc: "Our team sets up your AI chatbot, comment auto-responder, catalog, and dashboard — usually within a week.",
+              title: "We build your website & automation",
+              desc: "Our team builds your product catalog website, AI chatbot, comment auto-responder, and dashboard — usually within a week.",
             },
             {
               step: "03",
               title: "We connect everything",
-              desc: "Your new WhatsApp number, Instagram/Facebook auto-DM, and product catalog go live. We test every flow.",
+              desc: "Your new website, WhatsApp number, Instagram/Facebook auto-DM all go live. We test every flow for you.",
             },
             {
               step: "04",
               title: "You watch the orders come in",
-              desc: "Your AI works 24/7. You get a dashboard showing every lead and sale. We handle support.",
+              desc: "Your website and AI work 24/7. You get a dashboard showing every lead and sale. We handle support.",
             },
           ].map((s) => (
             <div key={s.step} className="flex gap-4">
@@ -194,41 +195,69 @@ export default function AgencyPage() {
       {/* SERVICES — What you get */}
       <section className="px-4 py-16 md:py-24">
         <SectionLabel>What You Get</SectionLabel>
-        <SectionTitle>Everything you need to automate sales</SectionTitle>
-        <div className="mx-auto mt-10 grid max-w-4xl gap-5 sm:grid-cols-2">
-          {[
-            {
-              icon: "💬",
-              title: "WhatsApp AI Chatbot",
-              desc: "Auto-replies on your own WhatsApp Business number 24/7. Answers questions, shares price lists, collects orders — even at 3am.",
-            },
-            {
-              icon: "📲",
-              title: "Instagram & Facebook Auto-DM",
-              desc: "When someone comments 'price' or 'how to order', they get a DM with your catalog and WhatsApp link in seconds.",
-            },
-            {
-              icon: "🛍️",
-              title: "Product Catalog Website",
-              desc: "A clean, one-page site with all your products, prices, and a one-tap WhatsApp order button. Live in 24 hours.",
-            },
-            {
-              icon: "📊",
-              title: "Lead Dashboard",
-              desc: "Every message, comment, and lead in one screen. See who's buying, who's interested, and what you're earning.",
-            },
-          ].map((s) => (
-            <div
-              key={s.title}
-              className="group rounded-xl border border-white/10 bg-[#0D1B5E]/30 p-6 transition hover:border-[#00C9B1]/40 hover:shadow-[0_0_30px_rgba(0,201,177,0.06)]"
-            >
-              <span className="text-3xl">{s.icon}</span>
-              <h3 className="mt-3 text-base font-bold text-white">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-400">{s.desc}</p>
-            </div>
-          ))}
+        <SectionTitle>Websites &amp; automation to grow your business</SectionTitle>
+
+        {/* Website Design Group */}
+        <div className="mx-auto mt-12 max-w-4xl">
+          <p className="mb-4 text-sm font-semibold tracking-wide text-white">
+            🌐 Website Design
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {[
+              {
+                icon: "🛍️",
+                title: "Product Catalog Website",
+                desc: "A clean, one-page site with all your products, prices, and a one-tap WhatsApp order button. Live in 24 hours.",
+              },
+              {
+                icon: "📊",
+                title: "Lead Dashboard",
+                desc: "Every message, comment, and lead in one screen. See who's buying, who's interested, and what you're earning.",
+              },
+            ].map((s) => (
+              <div
+                key={s.title}
+                className="group rounded-xl border border-white/10 bg-[#0D1B5E]/30 p-6 transition hover:border-[#00C9B1]/40 hover:shadow-[0_0_30px_rgba(0,201,177,0.06)]"
+              >
+                <span className="text-3xl">{s.icon}</span>
+                <h3 className="mt-3 text-base font-bold text-white">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-400">{s.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="mt-8 text-center">
+
+        {/* AI Automation Group */}
+        <div className="mx-auto mt-10 max-w-4xl">
+          <p className="mb-4 text-sm font-semibold tracking-wide text-white">
+            🤖 AI Automation
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {[
+              {
+                icon: "💬",
+                title: "WhatsApp AI Chatbot",
+                desc: "Auto-replies on your own WhatsApp Business number 24/7. Answers questions, shares price lists, collects orders — even at 3am.",
+              },
+              {
+                icon: "📲",
+                title: "Instagram & Facebook Auto-DM",
+                desc: "When someone comments 'price' or 'how to order', they get a DM with your catalog and WhatsApp link in seconds.",
+              },
+            ].map((s) => (
+              <div
+                key={s.title}
+                className="group rounded-xl border border-white/10 bg-[#0D1B5E]/30 p-6 transition hover:border-[#00C9B1]/40 hover:shadow-[0_0_30px_rgba(0,201,177,0.06)]"
+              >
+                <span className="text-3xl">{s.icon}</span>
+                <h3 className="mt-3 text-base font-bold text-white">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-400">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 text-center">
           <BookCallCta />
         </div>
       </section>
