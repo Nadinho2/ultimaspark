@@ -16,7 +16,7 @@ export function PageShell({ children }: { children: React.ReactNode }) {
         <main
           className={
             isAgency
-              ? "flex-1 bg-[#0D1B5E]"
+              ? "flex-1 bg-primary"
               : "mx-auto w-full max-w-6xl flex-1 px-4 pb-12 pt-10 md:px-6"
           }
         >

@@ -5,11 +5,12 @@ import { useState } from "react";
 const TABS = ["Website Design", "Automation & AI"] as const;
 type Tab = (typeof TABS)[number];
 
-const CALENDLY_LINK = "https://calendly.com/ultimaspark/discovery";
-const WHATSAPP_ENQUIRY_LINK =
-  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20an%20automation%20build";
-const WHATSAPP_CHAT_LINK =
-  "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20discuss%20a%20custom%20build";
+const CUSTOM_WEBSITE_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20need%20a%20custom%20website%20build";
+const CUSTOM_AUTOMATION_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20need%20a%20custom%20automation%20build";
+const CUSTOM_QUOTE_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20need%20a%20custom%20quote";
 
 const WEBSITE_DESIGN_TABLE = [
   { project: "Landing Page", price: "₦80,000" },
@@ -49,7 +50,7 @@ function GetStartedButton({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex shrink-0 rounded-full border border-gray-300 px-3.5 py-1.5 text-xs font-medium text-gray-500 transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
+      className="inline-flex shrink-0 rounded-full border border-gray-300 px-3.5 py-1.5 text-xs font-medium text-gray-500 transition hover:border-spark hover:text-spark"
     >
       Get Started
     </a>
@@ -60,12 +61,12 @@ export function CustomBuildSection() {
   const [activeTab, setActiveTab] = useState<Tab>("Website Design");
 
   return (
-    <section className="bg-[#f9fafb] px-4 pt-20 pb-16 md:pt-28 md:pb-24">
+    <section className="bg-bg px-4 pt-20 pb-16 md:pt-28 md:pb-24">
       {/* Section header */}
       <p className="text-center font-mono text-xs font-medium uppercase tracking-[0.25em] text-gray-400">
         Custom Builds
       </p>
-      <h2 className="mt-3 text-center text-2xl font-bold text-[#111827] sm:text-3xl">
+      <h2 className="mt-3 text-center text-2xl font-bold text-text-primary sm:text-3xl">
         Need Something Specific?
       </h2>
       <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-gray-500">
@@ -82,8 +83,8 @@ export function CustomBuildSection() {
             onClick={() => setActiveTab(tab)}
             className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
               activeTab === tab
-                ? "border-[#00C9B1] bg-[#00C9B1] text-[#0D1B5E]"
-                : "border-gray-200 bg-white text-gray-500 hover:border-[#00C9B1]/40 hover:text-gray-700"
+                ? "border-spark bg-spark text-primary"
+                : "border-gray-200 bg-white text-gray-500 hover:border-spark/40 hover:text-gray-700"
             }`}
           >
             {tab}
@@ -96,7 +97,7 @@ export function CustomBuildSection() {
         {activeTab === "Website Design" ? (
           <>
             {/* ── Website Design heading ── */}
-            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-[#111827]">
+            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-text-primary">
               One-time setup fee. Hosting on us.
             </p>
 
@@ -120,10 +121,10 @@ export function CustomBuildSection() {
                     i % 2 !== 0 ? "bg-gray-50/40" : "bg-white"
                   }`}
                 >
-                  <span className="flex-1 text-sm font-semibold text-[#111827]">{row.project}</span>
-                  <span className="w-24 shrink-0 text-sm font-bold text-[#00C9B1]">{row.price}</span>
+                  <span className="flex-1 text-sm font-semibold text-text-primary">{row.project}</span>
+                  <span className="w-24 shrink-0 text-sm font-bold text-spark">{row.price}</span>
                   <span className="w-28 shrink-0">
-                    <GetStartedButton href={CALENDLY_LINK} />
+                    <GetStartedButton href={CUSTOM_WEBSITE_LINK} />
                   </span>
                 </div>
               ))}
@@ -134,10 +135,10 @@ export function CustomBuildSection() {
               <p className="text-sm text-gray-500">
                 Prices are estimates.{" "}
                 <a
-                  href={WHATSAPP_CHAT_LINK}
+                  href={CUSTOM_QUOTE_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-[#00C9B1] transition hover:underline"
+                  className="font-medium text-spark transition hover:underline"
                 >
                   Chat with us for a precise quote &rarr;
                 </a>
@@ -147,7 +148,7 @@ export function CustomBuildSection() {
         ) : (
           <>
             {/* ── Automation heading ── */}
-            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-[#111827]">
+            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-text-primary">
               Setup fee is one-time. Monthly retainer covers hosting, monitoring, and AI infrastructure.
             </p>
 
@@ -174,11 +175,11 @@ export function CustomBuildSection() {
                     i % 2 !== 0 ? "bg-gray-50/40" : "bg-white"
                   }`}
                 >
-                  <span className="flex-1 text-sm font-semibold text-[#111827]">{row.name}</span>
-                  <span className="w-20 shrink-0 text-sm font-bold text-[#111827]">{row.setup}</span>
-                  <span className="w-20 shrink-0 text-sm font-bold text-[#00C9B1]">{row.monthly}</span>
+                  <span className="flex-1 text-sm font-semibold text-text-primary">{row.name}</span>
+                  <span className="w-20 shrink-0 text-sm font-bold text-text-primary">{row.setup}</span>
+                  <span className="w-20 shrink-0 text-sm font-bold text-spark">{row.monthly}</span>
                   <span className="w-28 shrink-0">
-                    <GetStartedButton href={WHATSAPP_ENQUIRY_LINK} />
+                    <GetStartedButton href={CUSTOM_AUTOMATION_LINK} />
                   </span>
                 </div>
               ))}
@@ -189,10 +190,10 @@ export function CustomBuildSection() {
               <p className="text-sm text-gray-500">
                 Prices are estimates.{" "}
                 <a
-                  href={WHATSAPP_ENQUIRY_LINK}
+                  href={CUSTOM_QUOTE_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-[#00C9B1] transition hover:underline"
+                  className="font-medium text-spark transition hover:underline"
                 >
                   Chat with us for a precise quote &rarr;
                 </a>
@@ -211,7 +212,7 @@ export function CustomBuildSection() {
           href="https://wa.me/2349126914795?text=Hi%2C%20I%20need%20a%20custom%20quote"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-[#00C9B1] transition hover:underline"
+          className="font-medium text-spark transition hover:underline"
         >
           Chat with us to build a custom quote &rarr;
         </a>

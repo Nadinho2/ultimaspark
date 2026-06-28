@@ -336,17 +336,31 @@
 import { useState } from "react";
 import { CustomBuildSection } from "./_components/CustomBuildSection";
 
-const BOOKING_WHATSAPP_LINK =
-  "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20book%20a%20free%20strategy%20call.%20My%20name%20is%20_____%2C%20my%20business%20is%20_____%2C%20and%20I%27d%20like%20to%20discuss%20_____";
-const CALENDLY_LINK = BOOKING_WHATSAPP_LINK;
-const DISCOVERY_CALL_LINK = BOOKING_WHATSAPP_LINK;
-const WHATSAPP_LINK = "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20automate%20my%20sales";
-const FULLSTACK_WHATSAPP_LINK =
+// WhatsApp pre-filled message constants — contextual per location
+const HERO_CTA_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27d%20like%20to%20automate%20my%20business";
+const HERO_SECONDARY_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20want%20to%20know%20more%20about%20Ultimaspark";
+const SOLUTION_CTA_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20not%20sure%20which%20service%20I%20need.%20Can%20you%20help%3F";
+const WEBSITE_ONLY_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20getting%20a%20website";
+const STARTER_PLAN_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20the%20Starter%20package";
+const GROWTH_PLAN_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20the%20Growth%20package";
+const FULLSTACK_PLAN_LINK =
   "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20interested%20in%20the%20Full%20Stack%20package";
-const WHATSAPP_AD_LINK =
+const PLAN_HELP_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20need%20help%20choosing%20a%20plan";
+const FINAL_CTA_PRIMARY_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%27m%20ready%20to%20get%20started%20with%20Ultimaspark";
+const FINAL_CTA_SECONDARY_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20want%20to%20know%20more%20before%20I%20decide";
+const FLOATING_WHATSAPP_LINK =
   "https://wa.me/2349126914795?text=Hi%2C%20I%20saw%20your%20ad%20and%20I%27m%20interested%20in%20Ultimaspark";
-const WHATSAPP_HERO_LINK =
-  "https://wa.me/2349126914795?text=Hi%2C%20I%20want%20to%20automate%20my%20business";
+const FAQ_WHATSAPP_LINK =
+  "https://wa.me/2349126914795?text=Hi%2C%20I%20have%20a%20question%20about%20Ultimaspark";
 
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -354,7 +368,7 @@ function scrollToSection(id: string) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-[#00C9B1]">
+    <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-spark">
       {children}
     </p>
   );
@@ -368,39 +382,14 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BookCallCta({ variant = "primary" }: { variant?: "primary" | "outline" }) {
-  if (variant === "outline") {
-    return (
-      <a
-        href={DISCOVERY_CALL_LINK}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex rounded-full border border-white/30 px-7 py-3 text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
-      >
-        Get Started on WhatsApp →
-      </a>
-    );
-  }
-  return (
-    <a
-      href={DISCOVERY_CALL_LINK}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex rounded-full bg-[#00C9B1] px-7 py-3 text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0]"
-    >
-      Get Started on WhatsApp →
-    </a>
-  );
-}
-
 export default function AgencyPage() {
   return (
     <div className="relative min-h-screen text-white">
       {/* STICKY TOP BAR — 48px, mobile-first */}
-      <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between bg-[#0D1B5E]/95 px-4 backdrop-blur">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between bg-primary/95 px-4 backdrop-blur">
         {/* Logo only, no link */}
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00C9B1] text-xs font-bold text-[#0D1B5E]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-spark text-xs font-bold text-primary">
             ⚡
           </span>
           <span className="text-sm font-bold text-white">UltimaSpark</span>
@@ -408,19 +397,19 @@ export default function AgencyPage() {
 
         {/* Single CTA button → WhatsApp */}
         <a
-          href={CALENDLY_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full bg-[#00C9B1] px-4 py-1.5 text-xs font-semibold text-[#0D1B5E] transition hover:bg-[#00b4a0]"
-        >
-          Message Us
-        </a>
+          href={HERO_SECONDARY_LINK}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="rounded-full bg-spark px-4 py-1.5 text-xs font-semibold text-primary transition hover:bg-spark/80"
+      >
+        Message Us
+      </a>
       </header>
 
       {/* HERO */}
       <section className="px-4 pb-16 pt-20 md:pb-20 md:pt-28">
         {/* Line 1 — trust label */}
-        <p className="text-center font-mono text-xs font-medium uppercase tracking-[0.25em] text-[#00C9B1]">
+        <p className="text-center font-mono text-xs font-medium uppercase tracking-[0.25em] text-spark">
           Trusted by Nigerian Businesses
         </p>
 
@@ -439,23 +428,23 @@ export default function AgencyPage() {
         {/* Social proof bar */}
         <div className="mx-auto mt-6 flex max-w-md flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-gray-400">
           <span className="inline-flex items-center gap-1">
-            <span className="text-[#00C9B1]">⚡</span> 20+ Projects Shipped
+            <span className="text-spark">⚡</span> 20+ Projects Shipped
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="text-[#00C9B1]">⭐</span> 5+ Businesses Automated
+            <span className="text-spark">⭐</span> 5+ Businesses Automated
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="text-[#00C9B1]">🇳🇬</span> Nigeria-Based Team
+            <span className="text-spark">🇳🇬</span> Nigeria-Based Team
           </span>
         </div>
 
         {/* Primary CTA */}
         <div className="mx-auto mt-7 flex max-w-sm flex-col items-center gap-3">
           <a
-            href={CALENDLY_LINK}
+            href={HERO_CTA_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full rounded-full bg-[#00C9B1] px-8 py-4 text-center text-base font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0] active:scale-[0.98]"
+            className="w-full rounded-full bg-spark px-8 py-4 text-center text-base font-semibold text-primary shadow-lg shadow-spark/20 transition hover:bg-spark/80 active:scale-[0.98]"
           >
             Book Your Free Strategy Call →
           </a>
@@ -465,10 +454,10 @@ export default function AgencyPage() {
 
           {/* Secondary CTA — WhatsApp fallback */}
           <a
-            href={WHATSAPP_HERO_LINK}
+            href={HERO_SECONDARY_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-gray-400 transition hover:text-[#00C9B1]"
+            className="text-sm font-medium text-gray-400 transition hover:text-spark"
           >
             Prefer WhatsApp? Chat with us →
           </a>
@@ -506,7 +495,7 @@ export default function AgencyPage() {
               className="rounded-xl border border-gray-100 bg-gray-50/80 p-6"
             >
               <span className="text-3xl">{card.icon}</span>
-              <h3 className="mt-3 text-base font-bold text-[#0D1B5E]">
+              <h3 className="mt-3 text-base font-bold text-primary">
                 {card.headline}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-gray-500">
@@ -517,10 +506,25 @@ export default function AgencyPage() {
         </div>
 
         {/* Closing bold line — no CTA */}
-        <p className="mx-auto mt-10 max-w-lg text-center text-lg font-semibold text-[#0D1B5E] md:text-xl">
+        <p className="mx-auto mt-10 max-w-lg text-center text-lg font-semibold text-primary md:text-xl">
           This is not a discipline problem. It's a systems problem. We fix
           systems.
         </p>
+
+        {/* Testimonial */}
+        <div className="mx-auto mt-12 max-w-[600px] rounded-2xl bg-gray-50/80 px-6 py-8 text-center">
+          <span className="text-[64px] font-serif leading-none text-spark select-none">
+            &ldquo;
+          </span>
+          <p className="-mt-4 text-[16px] italic leading-relaxed text-primary md:text-[18px]">
+            Before Ultimaspark, I was losing customers every night because I
+            couldn&apos;t reply fast enough. Now my WhatsApp replies itself and
+            I wake up to confirmed orders.
+          </p>
+          <p className="mt-4 text-sm not-italic text-gray-400">
+            &mdash; BelleHairs Owerri, Lagos
+          </p>
+        </div>
       </section>
 
       {/* SOLUTION — "Here's What We Build For You" */}
@@ -558,7 +562,7 @@ export default function AgencyPage() {
             },
           ].map((item) => (
             <div key={item.num} className="flex gap-4 py-5 first:pt-0 last:pb-0">
-              <span className="shrink-0 pt-0.5 text-2xl font-extrabold text-[#00C9B1]">
+              <span className="shrink-0 pt-0.5 text-2xl font-extrabold text-spark">
                 {item.num}
               </span>
               <div>
@@ -573,10 +577,10 @@ export default function AgencyPage() {
         <div className="mx-auto mt-12 flex max-w-sm flex-col items-center gap-3 text-center">
           <p className="text-sm text-gray-400">Not sure which one you need?</p>
           <a
-            href={CALENDLY_LINK}
+            href={SOLUTION_CTA_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex rounded-full bg-[#00C9B1] px-7 py-3 text-sm font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0]"
+            className="inline-flex rounded-full bg-spark px-7 py-3 text-sm font-semibold text-primary shadow-lg shadow-spark/20 transition hover:bg-spark/80"
           >
             Let&apos;s figure it out together →
           </a>
@@ -593,15 +597,15 @@ export default function AgencyPage() {
         {/* BelleHairs Case Study */}
         <div className="mx-auto mt-10 max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* Label bar */}
-          <div className="border-b border-gray-100 bg-[#00C9B1]/10 px-6 py-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#00C9B1]">
+          <div className="border-b border-gray-100 bg-spark/10 px-6 py-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-spark">
               Client Work
             </span>
           </div>
 
           {/* Business name */}
           <div className="border-b border-gray-100 px-6 py-4">
-            <p className="text-lg font-bold text-[#0D1B5E]">BelleHairs Owerri</p>
+            <p className="text-lg font-bold text-primary">BelleHairs Owerri</p>
           </div>
 
           {/* Before / After columns */}
@@ -637,7 +641,7 @@ export default function AgencyPage() {
                   "Every lead tracked in one dashboard",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-gray-600">
-                    <span className="mt-0.5 shrink-0 text-[#00C9B1]">✓</span>
+                    <span className="mt-0.5 shrink-0 text-spark">✓</span>
                     {item}
                   </li>
                 ))}
@@ -647,7 +651,7 @@ export default function AgencyPage() {
 
           {/* Result line — the money shot */}
           <div className="border-t border-gray-100 px-6 py-5 text-center">
-            <p className="text-xl font-bold text-[#00C9B1] md:text-2xl">
+            <p className="text-xl font-bold text-spark md:text-2xl">
               24/7 automated — zero messages missed
             </p>
           </div>
@@ -659,16 +663,19 @@ export default function AgencyPage() {
             {
               name: "MikeNazy Merchandize",
               desc: "Fashion E-commerce Store",
+              outcome: "WhatsApp checkout live — orders without a payment gateway",
               url: "https://mikenazymerchandize.lovable.app",
             },
             {
               name: "NaijaSubHub",
               desc: "VTU Platform",
+              outcome: "24/7 automated data and airtime sales with instant delivery",
               url: "https://naijasubhub.lovable.app",
             },
             {
               name: "Octra",
               desc: "Blockchain Ecosystem Site",
+              outcome: "Launch landing page for a privacy-first Layer-1 blockchain",
               url: "https://octra-three.vercel.app",
             },
           ].map((project) => (
@@ -676,13 +683,14 @@ export default function AgencyPage() {
               key={project.name}
               className="rounded-xl border border-gray-100 bg-gray-50/60 p-5"
             >
-              <p className="text-sm font-semibold text-[#0D1B5E]">{project.name}</p>
+              <p className="text-sm font-semibold text-primary">{project.name}</p>
               <p className="mt-1 text-xs text-gray-500">{project.desc}</p>
+              <p className="mt-1 text-[13px] italic text-gray-400">{project.outcome}</p>
               <a
                 href={project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-block text-xs font-medium text-[#00C9B1] transition hover:underline"
+                className="mt-3 inline-block text-xs font-medium text-spark transition hover:underline"
               >
                 View Project →
               </a>
@@ -694,7 +702,7 @@ export default function AgencyPage() {
         <div className="mt-8 text-center">
           <a
             href="/agency/portfolio"
-            className="text-sm font-medium text-gray-500 transition hover:text-[#00C9B1]"
+            className="text-sm font-medium text-gray-500 transition hover:text-spark"
           >
             See all 20+ projects we&apos;ve shipped →
           </a>
@@ -718,7 +726,7 @@ export default function AgencyPage() {
             {
               name: "Website Only",
               tag: "Best for: businesses that just need a professional site",
-              setup: "₦80,000 – ₦500,000",
+              setup: "From ₦80,000",
               retainer: "+ ₦15,000/month hosting & maintenance",
               included: [
                 "Professional website (up to 5 pages)",
@@ -729,7 +737,7 @@ export default function AgencyPage() {
               notIncluded: ["AI Chatbot", "Auto-DM", "Dashboard"],
               popular: false,
               premium: false,
-              ctaLink: DISCOVERY_CALL_LINK,
+              ctaLink: WEBSITE_ONLY_LINK,
             },
             {
               name: "Starter",
@@ -747,7 +755,7 @@ export default function AgencyPage() {
               notIncluded: ["Auto-DM", "Catalog Website", "Dashboard"],
               popular: false,
               premium: false,
-              ctaLink: DISCOVERY_CALL_LINK,
+              ctaLink: STARTER_PLAN_LINK,
             },
             {
               name: "Growth",
@@ -764,47 +772,46 @@ export default function AgencyPage() {
               notIncluded: ["Dashboard"],
               popular: true,
               premium: false,
-              ctaLink: DISCOVERY_CALL_LINK,
+              ctaLink: GROWTH_PLAN_LINK,
             },
             {
               name: "Full Stack",
               tag: "Complete website + automation",
               setup: "From ₦600,000",
-              retainer: "From ₦25,000/month",
+              retainer: "₦80,000 – ₦120,000/month",
               included: [
                 "Everything in Growth",
                 "Full e-commerce store with WhatsApp checkout",
                 "Lead Management Dashboard",
-                "Priority support",
                 "10-day setup",
               ],
               notIncluded: [],
               popular: false,
               premium: true,
-              ctaLink: FULLSTACK_WHATSAPP_LINK,
+              ctaLink: FULLSTACK_PLAN_LINK,
             },
           ].map((plan) => (
             <div
               key={plan.name}
               className={`relative rounded-xl border p-6 transition ${
                 plan.popular
-                  ? "scale-[1.03] border-[#00C9B1] bg-[#0D1B5E]/60 shadow-[0_0_40px_rgba(0,201,177,0.12)]"
+                  ? "scale-[1.03] border-spark bg-primary/60 shadow-[0_0_40px_rgba(0,201,177,0.12)]"
                   : plan.premium
-                    ? "border-[#00C9B1]/60 bg-[#0D1B5E]/40 shadow-[0_0_30px_rgba(0,201,177,0.15)]"
-                    : "border-white/10 bg-[#0D1B5E]/30"
+                    ? "border-spark/60 bg-primary/40 shadow-[0_0_30px_rgba(0,201,177,0.15)]"
+                    : "border-white/10 bg-primary/30"
               }`}
             >
               {plan.popular && (
-                <span className="absolute -top-3 right-4 rounded-full bg-[#00C9B1] px-3 py-1 text-xs font-bold text-[#0D1B5E] shadow-lg">
+                <span className="absolute -top-3 right-4 rounded-full bg-spark px-3 py-1 text-xs font-bold text-primary shadow-lg">
                   Most Popular
                 </span>
               )}
               {plan.premium && (
-                <span className="absolute -top-3 right-4 rounded-full border border-[#00C9B1]/60 bg-[#0D1B5E] px-3 py-1 text-xs font-bold text-[#00C9B1] shadow-lg">
+                <span className="absolute -top-3 right-4 rounded-full border border-spark/60 bg-primary px-3 py-1 text-xs font-bold text-spark shadow-lg">
                   Flagship
                 </span>
               )}
-              <p className="text-xs font-semibold text-[#00C9B1]">{plan.tag}</p>
+              <p className="text-xs font-semibold text-spark">{plan.tag}</p>
               <h3 className={`mt-2 font-bold text-white ${plan.premium ? "text-2xl" : "text-xl"}`}>{plan.name}</h3>
               <p className={`mt-2 font-extrabold text-white ${plan.premium ? "text-3xl" : "text-2xl"}`}>{plan.setup}</p>
               <p className="text-xs text-gray-400">setup fee</p>
@@ -813,7 +820,7 @@ export default function AgencyPage() {
               <ul className="mt-5 space-y-2">
                 {plan.included.map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-gray-300">
-                    <span className="mt-0.5 text-[#00C9B1]">✓</span>
+                    <span className="mt-0.5 text-spark">✓</span>
                     {item}
                   </li>
                 ))}
@@ -831,8 +838,8 @@ export default function AgencyPage() {
                 rel="noopener noreferrer"
                 className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
                   plan.popular || plan.premium
-                    ? "bg-[#00C9B1] text-[#0D1B5E] hover:bg-[#00b4a0]"
-                    : "border border-white/20 text-white hover:border-[#00C9B1] hover:text-[#00C9B1]"
+                    ? "bg-spark text-primary hover:bg-spark/80"
+                    : "border border-white/20 text-white hover:border-spark hover:text-spark"
                 }`}
               >
                 Get Started →
@@ -844,10 +851,10 @@ export default function AgencyPage() {
         <p className="mx-auto mt-8 max-w-md text-center text-sm text-gray-400">
           Not sure which plan fits?{" "}
           <a
-            href={WHATSAPP_LINK}
+            href={PLAN_HELP_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-[#00C9B1] transition hover:underline"
+            className="font-medium text-spark transition hover:underline"
           >
             Chat with us on WhatsApp →
           </a>
@@ -858,7 +865,7 @@ export default function AgencyPage() {
       <CustomBuildSection />
 
       {/* All builds include line */}
-      <p className="bg-[#f9fafb] px-4 pb-8 text-center text-xs text-gray-400">
+      <p className="bg-bg px-4 pb-8 text-center text-xs text-gray-400">
         All builds include: mobile-first design · WhatsApp integration · 30
         days post-launch support · free hosting on our infrastructure
       </p>
@@ -905,7 +912,7 @@ export default function AgencyPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="bg-[#0D1B5E] px-4 py-20 text-center md:py-28">
+      <section className="bg-primary px-4 py-20 text-center md:py-28">
         <h2 className="mx-auto max-w-lg text-2xl font-extrabold leading-tight text-white sm:text-3xl md:text-4xl">
           Every Day You Wait Is Another Day of Missed Sales.
         </h2>
@@ -922,19 +929,19 @@ export default function AgencyPage() {
 
         <div className="mx-auto mt-8 flex max-w-sm flex-col items-center gap-3">
           <a
-            href={CALENDLY_LINK}
+            href={FINAL_CTA_PRIMARY_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full rounded-full bg-[#00C9B1] px-8 py-4 text-center text-base font-semibold text-[#0D1B5E] shadow-lg shadow-[#00C9B1]/20 transition hover:bg-[#00b4a0] active:scale-[0.98]"
+            className="w-full rounded-full bg-spark px-8 py-4 text-center text-base font-semibold text-primary shadow-lg shadow-spark/20 transition hover:bg-spark/80 active:scale-[0.98]"
           >
             Book Your Free Strategy Call Now →
           </a>
 
           <a
-            href={WHATSAPP_HERO_LINK}
+            href={FINAL_CTA_SECONDARY_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full rounded-full border border-white/30 py-3.5 text-center text-sm font-medium text-white transition hover:border-[#00C9B1] hover:text-[#00C9B1]"
+            className="w-full rounded-full border border-white/30 py-3.5 text-center text-sm font-medium text-white transition hover:border-spark hover:text-spark"
           >
             Chat on WhatsApp First
           </a>
@@ -948,7 +955,7 @@ export default function AgencyPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#0D1B5E] px-4 py-8 text-center">
+      <footer className="bg-primary px-4 py-8 text-center">
         <p className="text-xs text-gray-500">
           &copy; 2025 UltimaSpark &middot; AI Automation for Sellers &middot;
           Built in Nigeria 🇳🇬
@@ -957,7 +964,7 @@ export default function AgencyPage() {
 
       {/* FLOATING WHATSAPP — fixed bottom-right */}
       <a
-        href={WHATSAPP_AD_LINK}
+        href={FLOATING_WHATSAPP_LINK}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg shadow-black/25 transition-transform hover:scale-110 active:scale-95"
