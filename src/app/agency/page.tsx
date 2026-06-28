@@ -865,7 +865,7 @@ export default function AgencyPage() {
       <CustomBuildSection />
 
       {/* All builds include line */}
-      <p className="bg-bg px-4 pb-8 text-center text-xs text-gray-400">
+      <p className="bg-white px-4 pb-8 text-center text-xs text-gray-400">
         All builds include: mobile-first design · WhatsApp integration · 30
         days post-launch support · free hosting on our infrastructure
       </p>
@@ -957,8 +957,7 @@ export default function AgencyPage() {
       {/* FOOTER */}
       <footer className="bg-gray-900 px-4 py-8 text-center">
         <p className="text-xs text-gray-500">
-          &copy; 2025 UltimaSpark &middot; AI Automation for Sellers &middot;
-          Built in Nigeria 🇳🇬
+          &copy; 2025 UltimaSpark &middot; AI Automation for Sellers
         </p>
       </footer>
 

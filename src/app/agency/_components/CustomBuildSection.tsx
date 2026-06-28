@@ -61,12 +61,12 @@ export function CustomBuildSection() {
   const [activeTab, setActiveTab] = useState<Tab>("Website Design");
 
   return (
-    <section className="bg-bg px-4 pt-20 pb-16 md:pt-28 md:pb-24">
+    <section className="bg-white px-4 pt-20 pb-16 md:pt-28 md:pb-24">
       {/* Section header */}
       <p className="text-center font-mono text-xs font-medium uppercase tracking-[0.25em] text-gray-400">
         Custom Builds
       </p>
-      <h2 className="mt-3 text-center text-2xl font-bold text-text-primary sm:text-3xl">
+      <h2 className="mt-3 text-center text-2xl font-bold text-gray-900 sm:text-3xl">
         Need Something Specific?
       </h2>
       <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-gray-500">
@@ -83,7 +83,7 @@ export function CustomBuildSection() {
             onClick={() => setActiveTab(tab)}
             className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
               activeTab === tab
-                ? "border-spark bg-spark text-primary"
+                ? "border-spark bg-spark text-gray-900"
                 : "border-gray-200 bg-white text-gray-500 hover:border-spark/40 hover:text-gray-700"
             }`}
           >
@@ -97,7 +97,7 @@ export function CustomBuildSection() {
         {activeTab === "Website Design" ? (
           <>
             {/* ── Website Design heading ── */}
-            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-text-primary">
+            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-gray-900">
               One-time setup fee. Hosting on us.
             </p>
 
@@ -121,7 +121,7 @@ export function CustomBuildSection() {
                     i % 2 !== 0 ? "bg-gray-50/40" : "bg-white"
                   }`}
                 >
-                  <span className="flex-1 text-sm font-semibold text-text-primary">{row.project}</span>
+                  <span className="flex-1 text-sm font-semibold text-gray-900">{row.project}</span>
                   <span className="w-24 shrink-0 text-sm font-bold text-spark">{row.price}</span>
                   <span className="w-28 shrink-0">
                     <GetStartedButton href={CUSTOM_WEBSITE_LINK} />
@@ -148,7 +148,7 @@ export function CustomBuildSection() {
         ) : (
           <>
             {/* ── Automation heading ── */}
-            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-text-primary">
+            <p className="border-b border-gray-100 px-6 py-3 text-sm font-semibold text-gray-900">
               Setup fee is one-time. Monthly retainer covers hosting, monitoring, and AI infrastructure.
             </p>
 
@@ -175,8 +175,8 @@ export function CustomBuildSection() {
                     i % 2 !== 0 ? "bg-gray-50/40" : "bg-white"
                   }`}
                 >
-                  <span className="flex-1 text-sm font-semibold text-text-primary">{row.name}</span>
-                  <span className="w-20 shrink-0 text-sm font-bold text-text-primary">{row.setup}</span>
+                  <span className="flex-1 text-sm font-semibold text-gray-900">{row.name}</span>
+                  <span className="w-20 shrink-0 text-sm font-bold text-gray-900">{row.setup}</span>
                   <span className="w-20 shrink-0 text-sm font-bold text-spark">{row.monthly}</span>
                   <span className="w-28 shrink-0">
                     <GetStartedButton href={CUSTOM_AUTOMATION_LINK} />
