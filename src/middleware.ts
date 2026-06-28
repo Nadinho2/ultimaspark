@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/health",
+  "/agency(.*)",
 ]);
 
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
