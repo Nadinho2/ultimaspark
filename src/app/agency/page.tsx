@@ -389,7 +389,7 @@ export default function AgencyPage() {
       <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between bg-gray-900/95 px-4 backdrop-blur">
         {/* Logo only, no link */}
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-spark text-xs font-bold text-primary">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-spark text-xs font-bold text-gray-900">
             ⚡
           </span>
           <span className="text-sm font-bold text-white">UltimaSpark</span>
@@ -400,7 +400,7 @@ export default function AgencyPage() {
           href={HERO_SECONDARY_LINK}
         target="_blank"
         rel="noopener noreferrer"
-        className="rounded-full bg-spark px-4 py-1.5 text-xs font-semibold text-primary transition hover:bg-spark/80"
+        className="rounded-full bg-spark px-4 py-1.5 text-xs font-semibold text-gray-900 transition hover:bg-spark/80"
       >
         Message Us
       </a>
@@ -444,7 +444,7 @@ export default function AgencyPage() {
             href={HERO_CTA_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full rounded-full bg-spark px-8 py-4 text-center text-base font-semibold text-primary shadow-lg shadow-spark/20 transition hover:bg-spark/80 active:scale-[0.98]"
+            className="w-full rounded-full bg-spark px-8 py-4 text-center text-base font-semibold text-gray-900 shadow-lg shadow-spark/20 transition hover:bg-spark/80 active:scale-[0.98]"
           >
             Book Your Free Strategy Call →
           </a>
@@ -580,7 +580,7 @@ export default function AgencyPage() {
             href={SOLUTION_CTA_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex rounded-full bg-spark px-7 py-3 text-sm font-semibold text-primary shadow-lg shadow-spark/20 transition hover:bg-spark/80"
+            className="inline-flex rounded-full bg-spark px-7 py-3 text-sm font-semibold text-gray-900 shadow-lg shadow-spark/20 transition hover:bg-spark/80"
           >
             Let&apos;s figure it out together →
           </a>
@@ -838,7 +838,7 @@ export default function AgencyPage() {
                 rel="noopener noreferrer"
                 className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
                   plan.popular || plan.premium
-                    ? "bg-spark text-primary hover:bg-spark/80"
+                    ? "bg-spark text-gray-900 hover:bg-spark/80"
                     : "border border-white/20 text-white hover:border-spark hover:text-spark"
                 }`}
               >
@@ -932,7 +932,7 @@ export default function AgencyPage() {
             href={FINAL_CTA_PRIMARY_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full rounded-full bg-spark px-8 py-4 text-center text-base font-semibold text-primary shadow-lg shadow-spark/20 transition hover:bg-spark/80 active:scale-[0.98]"
+            className="w-full rounded-full bg-spark px-8 py-4 text-center text-base font-semibold text-gray-900 shadow-lg shadow-spark/20 transition hover:bg-spark/80 active:scale-[0.98]"
           >
             Book Your Free Strategy Call Now →
           </a>
