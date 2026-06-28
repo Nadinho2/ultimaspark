@@ -386,7 +386,7 @@ export default function AgencyPage() {
   return (
     <div className="relative min-h-screen text-white">
       {/* STICKY TOP BAR — 48px, mobile-first */}
-      <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between bg-primary/95 px-4 backdrop-blur">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between bg-gray-900/95 px-4 backdrop-blur">
         {/* Logo only, no link */}
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-spark text-xs font-bold text-primary">
@@ -795,10 +795,10 @@ export default function AgencyPage() {
               key={plan.name}
               className={`relative rounded-xl border p-6 transition ${
                 plan.popular
-                  ? "scale-[1.03] border-spark bg-primary/60 shadow-[0_0_40px_rgba(0,201,177,0.12)]"
+                  ? "scale-[1.03] border-spark bg-gray-800/60 shadow-[0_0_40px_rgba(0,201,177,0.12)]"
                   : plan.premium
-                    ? "border-spark/60 bg-primary/40 shadow-[0_0_30px_rgba(0,201,177,0.15)]"
-                    : "border-white/10 bg-primary/30"
+                    ? "border-spark/60 bg-gray-800/40 shadow-[0_0_30px_rgba(0,201,177,0.15)]"
+                    : "border-white/10 bg-gray-800/30"
               }`}
             >
               {plan.popular && (
@@ -807,7 +807,7 @@ export default function AgencyPage() {
                 </span>
               )}
               {plan.premium && (
-                <span className="absolute -top-3 right-4 rounded-full border border-spark/60 bg-primary px-3 py-1 text-xs font-bold text-spark shadow-lg">
+                <span className="absolute -top-3 right-4 rounded-full border border-spark/60 bg-gray-900 px-3 py-1 text-xs font-bold text-spark shadow-lg">
                   Flagship
                 </span>
               )}
@@ -912,7 +912,7 @@ export default function AgencyPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="bg-primary px-4 py-20 text-center md:py-28">
+      <section className="bg-gray-900 px-4 py-20 text-center md:py-28">
         <h2 className="mx-auto max-w-lg text-2xl font-extrabold leading-tight text-white sm:text-3xl md:text-4xl">
           Every Day You Wait Is Another Day of Missed Sales.
         </h2>
@@ -955,7 +955,7 @@ export default function AgencyPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-primary px-4 py-8 text-center">
+      <footer className="bg-gray-900 px-4 py-8 text-center">
         <p className="text-xs text-gray-500">
           &copy; 2025 UltimaSpark &middot; AI Automation for Sellers &middot;
           Built in Nigeria 🇳🇬
